@@ -1,10 +1,9 @@
 {
   "/not-found": "app/not-found.js",
-  "/page": "app/page.js",
   "/(main)/recipes/page": "app/(main)/recipes/page.js",
-  "/(main)/shopping-list/page": "app/(main)/shopping-list/page.js",
   "/(main)/meal-plans/page": "app/(main)/meal-plans/page.js",
-  "/api/recipes/route": "app/api/recipes/route.js",
   "/(main)/profile/page": "app/(main)/profile/page.js",
-  "/(main)/recipes/[recipeId]/page": "app/(main)/recipes/[recipeId]/page.js"
+  "/api/recipes/route": "app/api/recipes/route.js",
+  "/(main)/shopping-list/page": "app/(main)/shopping-list/page.js",
+  "/page": "app/page.js"
 }

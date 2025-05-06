@@ -4,7 +4,7 @@ import type React from "react"
 
 import { useState } from "react"
 import { Input } from "@repo/ui/input"
-import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@repo/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@repo/ui/dialog"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs"
 import { Card, CardContent } from "@repo/ui/card"
 import { Search } from "lucide-react"
@@ -51,6 +51,9 @@ export function RecipeSearchModal({
           <DialogTitle>
             添加食谱到 {day} {mealTime}
           </DialogTitle>
+          <DialogDescription>
+            通过搜索、从收藏或最近浏览中选择食谱添加到您的餐饮计划中。
+          </DialogDescription>
         </DialogHeader>
         <div className="py-4">
           <form onSubmit={handleSearch} className="mb-4">

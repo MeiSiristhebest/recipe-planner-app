@@ -1,20 +1,15 @@
 {
   "pages": {
-    "/loading": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/loading.js"
-    ],
     "/layout": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/css/app/layout.css",
       "static/chunks/app/layout.js"
     ],
-    "/page": [
+    "/loading": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/page.js"
+      "static/chunks/app/loading.js"
     ],
     "/(main)/recipes/page": [
       "static/chunks/webpack.js",
@@ -26,11 +21,6 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(main)/recipes/loading.js"
     ],
-    "/(main)/shopping-list/page": [
-      "static/chunks/webpack.js",
-      "static/chunks/main-app.js",
-      "static/chunks/app/(main)/shopping-list/page.js"
-    ],
     "/(main)/meal-plans/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
@@ -41,15 +31,20 @@
       "static/chunks/main-app.js",
       "static/chunks/app/(main)/meal-plans/loading.js"
     ],
+    "/(main)/shopping-list/page": [
+      "static/chunks/webpack.js",
+      "static/chunks/main-app.js",
+      "static/chunks/app/(main)/shopping-list/page.js"
+    ],
     "/(main)/profile/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
       "static/chunks/app/(main)/profile/page.js"
     ],
-    "/(main)/recipes/[recipeId]/page": [
+    "/page": [
       "static/chunks/webpack.js",
       "static/chunks/main-app.js",
-      "static/chunks/app/(main)/recipes/[recipeId]/page.js"
+      "static/chunks/app/page.js"
     ],
     "/not-found": [
       "static/chunks/webpack.js",

@@ -126,3 +126,20 @@ body {
     font-family: "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
   }
 }
+
+/* NProgress Custom Styles */
+#nprogress .bar {
+  background: var(--primary) !important;
+  height: 3px !important;
+  z-index: 1031; /* Ensure it's on top */
+}
+
+#nprogress .peg {
+  box-shadow: 0 0 10px var(--primary), 0 0 5px var(--primary) !important;
+}
+
+#nprogress .spinner-icon {
+  border-top-color: var(--primary) !important;
+  border-left-color: var(--primary) !important;
+}
+/* End NProgress Custom Styles */

@@ -17,6 +17,14 @@ export default function ProfilePage() {
     avatar: "/placeholder.svg",
   })
 
+  const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setUser((prevUser) => ({
+      ...prevUser,
+      [name]: value,
+    }));
+  };
+
   return (
     <div className="container py-8">
       <h1 className="text-3xl font-bold mb-8">个人中心</h1>
@@ -143,13 +151,25 @@ export default function ProfilePage() {
                         <Label htmlFor="name" className="text-right">
                           姓名
                         </Label>
-                        <Input id="name" value={user.name} className="col-span-3" />
+                        <Input 
+                          id="name" 
+                          name="name"
+                          value={user.name} 
+                          onChange={handleInputChange}
+                          className="col-span-3" 
+                        />
                       </div>
                       <div className="grid grid-cols-4 items-center gap-4">
                         <Label htmlFor="email" className="text-right">
                           邮箱
                         </Label>
-                        <Input id="email" value={user.email} className="col-span-3" />
+                        <Input 
+                          id="email" 
+                          name="email"
+                          value={user.email} 
+                          onChange={handleInputChange}
+                          className="col-span-3" 
+                        />
                       </div>
                     </div>
                   </div>

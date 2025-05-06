@@ -3,8 +3,10 @@ import { ThemeProvider } from "@/components/theme-provider"
 import { Header } from "@/components/shared/header"
 import { Footer } from "@/components/shared/footer"
 import "./globals.css"
+import "nprogress/nprogress.css";
 import { QueryProvider } from "@/components/providers/query-provider"
 import { Toaster } from "sonner"
+import { NavigationEvents } from "@/components/shared/navigation-events"
 
 // 使用系统默认字体
 const systemFontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", "微软雅黑", Arial, sans-serif'
@@ -28,6 +30,7 @@ export default function RootLayout({
             <main className="flex-grow">{children}</main>
             <Footer />
             <Toaster richColors position="top-right" />
+            <NavigationEvents />
           </QueryProvider>
         </ThemeProvider>
       </body>

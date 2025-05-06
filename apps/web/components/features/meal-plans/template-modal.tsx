@@ -3,7 +3,7 @@
 import { useState } from "react"
 import { Button } from "@repo/ui/button"
 import { Input } from "@repo/ui/input"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@repo/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter, DialogDescription } from "@repo/ui/dialog"
 import { Card, CardContent } from "@repo/ui/card"
 import { Label } from "@repo/ui/label"
 import type { MealPlanItem } from "@/store/meal-plan-store"
@@ -37,6 +37,9 @@ export function TemplateModal({ isOpen, onClose, onSave, onLoad, templates, mode
       <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
           <DialogTitle>{mode === "save" ? "保存为模板" : "加载模板"}</DialogTitle>
+          <DialogDescription>
+            {mode === "save" ? "为当前的餐饮计划创建一个可复用的模板。" : "从已保存的模板中加载一个餐饮计划。"}
+          </DialogDescription>
         </DialogHeader>
 
         {mode === "save" ? (

@@ -1,5 +1,5 @@
 import { create } from "zustand"
-import { persist } from "zustand/middleware"
+import { persist, type PersistStorage } from "zustand/middleware"
 import type { Recipe } from "@recipe-planner/types"
 
 export type MealTime = "早餐" | "午餐" | "晚餐"
@@ -20,7 +20,7 @@ interface MealPlanState {
   sidebarRecipes: Recipe[]
   isLoading: boolean
   error: string | null
-  setCurrentWeekStart: (date: Date) => void
+  setCurrentWeekStart: (date: Date | string | number) => void
   addItem: (item: Omit<MealPlanItem, "id">) => void
   updateItem: (id: string, updates: Partial<Omit<MealPlanItem, "id">>) => void
   removeItem: (id: string) => void
@@ -31,6 +31,14 @@ interface MealPlanState {
   setError: (error: string | null) => void
 }
 
+// Helper to ensure a Date object is always a Date object (e.g., after JSON stringify/parse)
+const ensureDate = (date: string | Date | number): Date => {
+  if (date instanceof Date) {
+    return date;
+  }
+  return new Date(date);
+};
+
 export const useMealPlanStore = create<MealPlanState>()(
   persist(
     (set) => ({
@@ -39,7 +47,10 @@ export const useMealPlanStore = create<MealPlanState>()(
       sidebarRecipes: [],
       isLoading: false,
       error: null,
-      setCurrentWeekStart: (date) => set({ currentWeekStart: date }),
+      setCurrentWeekStart: (date) => {
+        const newDate = ensureDate(date);
+        set({ currentWeekStart: getStartOfWeek(newDate) });
+      },
       addItem: (item) =>
         set((state) => ({
           items: [...state.items, { ...item, id: generateId() }],
@@ -63,16 +74,52 @@ export const useMealPlanStore = create<MealPlanState>()(
     }),
     {
       name: "meal-plan-storage",
+      storage: {
+        getItem: (name: string) => {
+          const str = localStorage.getItem(name);
+          if (!str) return null;
+          
+          const { state, version } = JSON.parse(str);
+          
+          // Manually revive dates
+          if (state && typeof state.currentWeekStart === 'string') {
+            state.currentWeekStart = new Date(state.currentWeekStart);
+          }
+          // Example for items if they also contain dates that need revival
+          // if (state && state.items) {
+          //   state.items = state.items.map((item: MealPlanItem) => ({
+          //     ...item,
+          //     // Assuming recipe.createdAt and recipe.updatedAt are stored as strings
+          //     recipe: { 
+          //       ...item.recipe,
+          //       ...(item.recipe.createdAt && { createdAt: new Date(item.recipe.createdAt) }),
+          //       ...(item.recipe.updatedAt && { updatedAt: new Date(item.recipe.updatedAt) }),
+          //     }
+          //   }));
+          // }
+          return { state, version };
+        },
+        setItem: (name: string, value: { state: MealPlanState, version?: number }) => {
+          // Dates are automatically stringified to ISO format by JSON.stringify
+          localStorage.setItem(name, JSON.stringify(value));
+        },
+        removeItem: (name: string) => localStorage.removeItem(name),
+      } as PersistStorage<MealPlanState>, // Type assertion if needed
     },
   ),
 )
 
 // Helper functions
 function getStartOfWeek(date: Date): Date {
-  const d = new Date(date)
+  const d = new Date(date) // Clone date to avoid mutating original
   const day = d.getDay()
-  const diff = d.getDate() - day + (day === 0 ? -6 : 1) // Adjust when day is Sunday
-  return new Date(d.setDate(diff))
+  // Adjust when day is Sunday (0) to be the start of the week (Monday)
+  // or keep as is if week starts on Sunday based on locale.
+  // This logic assumes week starts on Monday.
+  const diff = d.getDate() - day + (day === 0 ? -6 : 1) 
+  d.setDate(diff)
+  d.setHours(0, 0, 0, 0) // Reset time to start of the day
+  return d
 }
 
 function generateId(): string {

@@ -11,11 +11,15 @@
       "@/*": ["./apps/web/*"],
       "@repo/ui/*": ["./packages/ui/src/*"],
       "@repo/utils/*": ["./packages/utils/src/*"],
-      "@repo/db": ["./packages/prisma-db/src/index.ts"]
+      "@repo/db": ["./packages/prisma-db/src/index.ts"],
+      "@recipe-planner/types": ["./packages/types/src/index.ts"]
     }
   },
-  "include": [
-    "next-env.d.ts"
+ "include": [
+    "next-env.d.ts",
+    "**/*.ts",
+    "**/*.tsx",
+    ".next/types/**/*.ts" // 如果您使用的是 Next.js 13 或更高版本并使用 App Router
   ],
   "exclude": ["node_modules", ".turbo", "dist"]
 }
