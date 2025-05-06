@@ -1,0 +1,4 @@
+
+> @repo/utils@0.0.0 lint D:\developWorkPlaces\WebProject\recipe-planner-app\packages\utils
+> eslint . --max-warnings 0
+

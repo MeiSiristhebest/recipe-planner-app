@@ -1,0 +1,5 @@
+
+> @repo/types@0.0.0 lint D:\developWorkPlaces\WebProject\recipe-planner-app\packages\types
+> eslint . --max-warnings 0
+
+Warning: React version was set to "detect" in eslint-plugin-react settings, but the "react" package is not installed. Assuming latest React version for linting.
