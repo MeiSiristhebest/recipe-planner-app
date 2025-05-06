@@ -11,16 +11,14 @@ datasource db {
 }
 
 model User {
-  id            String    @id @default(cuid())
+  id            String         @id @default(cuid())
   name          String?
-  email         String?   @unique
+  email         String         @unique
   emailVerified DateTime?
   image         String?
   password      String?
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  role          Role      @default(USER)
-
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
   recipes       Recipe[]
   favorites     Favorite[]
   mealPlans     MealPlan[]
@@ -29,52 +27,64 @@ model User {
   ratings       Rating[]
 }
 
-enum Role {
-  USER
-  ADMIN
-}
-
 model Recipe {
-  id           String   @id @default(cuid())
-  title        String
-  description  String?
-  ingredients  Json
-  instructions Json
-  cookingTime  Int
-  difficulty   String
-  servings     Int
-  image        String?
-  createdAt    DateTime @default(now())
-  updatedAt    DateTime @updatedAt
-
-  author           User               @relation(fields: [authorId], references: [id])
-  authorId         String
-  category         Category           @relation(fields: [categoryId], references: [id])
-  categoryId       String
-  tags             Tag[]
-  favorites        Favorite[]
-  mealItems        MealPlanItem[]
-  comments         Comment[]
-  ratings          Rating[]
-  ShoppingListItem ShoppingListItem[]
+  id              String           @id @default(cuid())
+  title           String
+  description     String?
+  cookingTime     Int              // in minutes
+  servings        Int
+  difficulty      String           // "简单", "中等", "困难"
+  ingredients     Json             // Array of ingredients with quantities
+  instructions    Json             // Array of step-by-step instructions
+  nutritionInfo   Json?            // Optional nutrition information
+  coverImage      String?          // URL to cover image
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+  published       Boolean          @default(false)
+  author          User             @relation(fields: [authorId], references: [id], onDelete: Cascade)
+  authorId        String
+  categories      CategoryOnRecipe[]
+  tags            TagOnRecipe[]
+  favorites       Favorite[]
+  mealPlanItems   MealPlanItem[]
+  comments        Comment[]
+  ratings         Rating[]
 }
 
 model Category {
-  id      String   @id @default(cuid())
-  name    String   @unique
-  recipes Recipe[]
+  id      String           @id @default(cuid())
+  name    String           @unique
+  recipes CategoryOnRecipe[]
+}
+
+model CategoryOnRecipe {
+  recipe     Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipeId   String
+  category   Category @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+  categoryId String
+
+  @@id([recipeId, categoryId])
 }
 
 model Tag {
-  id      String   @id @default(cuid())
-  name    String   @unique
-  recipes Recipe[]
+  id      String        @id @default(cuid())
+  name    String        @unique
+  recipes TagOnRecipe[]
+}
+
+model TagOnRecipe {
+  recipe   Recipe @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipeId String
+  tag      Tag    @relation(fields: [tagId], references: [id], onDelete: Cascade)
+  tagId    String
+
+  @@id([recipeId, tagId])
 }
 
 model Favorite {
-  user      User     @relation(fields: [userId], references: [id])
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
   userId    String
-  recipe    Recipe   @relation(fields: [recipeId], references: [id])
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   recipeId  String
   createdAt DateTime @default(now())
 
@@ -82,53 +92,54 @@ model Favorite {
 }
 
 model MealPlan {
-  id            String   @id @default(cuid())
-  name          String?
-  weekStartDate DateTime
-  isTemplate    Boolean  @default(false)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-
-  user   User           @relation(fields: [userId], references: [id])
-  userId String
-  items  MealPlanItem[]
+  id        String         @id @default(cuid())
+  name      String?        // Optional name for saved templates
+  startDate DateTime       // Start date of the meal plan (usually a Monday)
+  endDate   DateTime       // End date of the meal plan (usually a Sunday)
+  isTemplate Boolean       @default(false)
+  createdAt DateTime       @default(now())
+  updatedAt DateTime       @updatedAt
+  user      User           @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  items     MealPlanItem[]
 }
 
 model MealPlanItem {
-  id       String   @id @default(cuid())
-  date     DateTime
-  mealType String
-  position Int      @default(0)
-
+  id         String   @id @default(cuid())
+  date       DateTime // The specific date
+  mealTime   String   // "早餐", "午餐", "晚餐"
   mealPlan   MealPlan @relation(fields: [mealPlanId], references: [id], onDelete: Cascade)
   mealPlanId String
-  recipe     Recipe   @relation(fields: [recipeId], references: [id])
+  recipe     Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
   recipeId   String
+  servings   Int      @default(1)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@unique([mealPlanId, date, mealTime])
 }
 
 model ShoppingList {
-  id        String   @id @default(cuid())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  user   User               @relation(fields: [userId], references: [id])
-  userId String
-  items  ShoppingListItem[]
+  id        String             @id @default(cuid())
+  name      String?
+  createdAt DateTime           @default(now())
+  updatedAt DateTime           @updatedAt
+  user      User               @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  items     ShoppingListItem[]
 }
 
 model ShoppingListItem {
-  id        String  @id @default(cuid())
-  name      String
-  quantity  String
-  unit      String
-  category  String
-  isChecked Boolean @default(false)
-  notes     String?
-
+  id             String       @id @default(cuid())
+  name           String
+  quantity       String
+  category       String       // "蔬菜水果", "肉类海鲜", "乳制品蛋类", "调味品干货", "其他"
+  completed      Boolean      @default(false)
+  notes          String?
+  createdAt      DateTime     @default(now())
+  updatedAt      DateTime     @updatedAt
   shoppingList   ShoppingList @relation(fields: [shoppingListId], references: [id], onDelete: Cascade)
   shoppingListId String
-  recipe         Recipe?      @relation(fields: [recipeId], references: [id])
-  recipeId       String?
 }
 
 model Comment {
@@ -136,23 +147,36 @@ model Comment {
   content   String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  user     User   @relation(fields: [userId], references: [id])
-  userId   String
-  recipe   Recipe @relation(fields: [recipeId], references: [id])
-  recipeId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipeId  String
 }
 
 model Rating {
   id        String   @id @default(cuid())
-  value     Int
+  value     Int      // 1-5 stars
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
-
-  user     User   @relation(fields: [userId], references: [id])
-  userId   String
-  recipe   Recipe @relation(fields: [recipeId], references: [id])
-  recipeId String
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipeId  String
 
   @@unique([userId, recipeId])
+}
+
+model Ingredient {
+  id          String   @id @default(cuid())
+  name        String   @unique
+  category    String?  // 例如：蔬菜水果、肉类海鲜、乳制品蛋类等
+  calories    Float    // 每100克的卡路里
+  protein     Float    // 每100克的蛋白质(克)
+  fat         Float    // 每100克的脂肪(克)
+  carbs       Float    // 每100克的碳水化合物(克)
+  fiber       Float?   // 每100克的膳食纤维(克)
+  sugar       Float?   // 每100克的糖(克)
+  sodium      Float?   // 每100克的钠(毫克)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 }
