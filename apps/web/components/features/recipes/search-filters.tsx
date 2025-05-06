@@ -2,12 +2,12 @@
 
 import { useState, useEffect } from "react"
 import { useRouter, useSearchParams } from "next/navigation"
-import { Input } from "@/components/ui/input"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Label } from "@/components/ui/label"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
-import { Slider } from "@/components/ui/slider"
+import { Input } from "@repo/ui/input"
+import { Button } from "@repo/ui/button"
+import { Checkbox } from "@repo/ui/checkbox"
+import { Label } from "@repo/ui/label"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@repo/ui/select"
+import { Slider } from "@repo/ui/slider"
 import { Search, Filter, Clock, ChefHat, Tag } from "lucide-react"
 
 interface SearchFiltersProps {

@@ -2,12 +2,12 @@
 
 import { useState } from "react"
 import Image from "next/image"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Input } from "@/components/ui/input"
-import { Label } from "@/components/ui/label"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@repo/ui/button"
+import { Card, CardContent } from "@repo/ui/card"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs"
+import { Input } from "@repo/ui/input"
+import { Label } from "@repo/ui/label"
+import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/avatar"
 import { User, Lock, Settings, Heart, Calendar, ChefHat } from "lucide-react"
 
 export default function ProfilePage() {

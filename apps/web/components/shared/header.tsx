@@ -3,12 +3,13 @@
 import Link from "next/link"
 import { usePathname } from "next/navigation"
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@repo/ui/button"
 import { ThemeToggle } from "@/components/theme-toggle"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
-import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
+import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/avatar"
+import { Sheet, SheetContent, SheetTrigger } from "@repo/ui/sheet"
 import { Menu } from "lucide-react"
-import { cn } from "@/lib/utils"
+import { cn } from "@repo/utils"
+import { getRandomUserAvatar } from "@/config/image-resources"
 
 const navItems = [
   { name: "首页", href: "/" },
@@ -51,10 +52,12 @@ export function Header() {
           <ThemeToggle />
 
           {isLoggedIn ? (
-            <Avatar>
-              <AvatarImage src="/placeholder.svg" alt="User" />
+            <div className="relative">
+              <Avatar>
+                <AvatarImage src={getRandomUserAvatar()} alt="User" />
               <AvatarFallback>用户</AvatarFallback>
             </Avatar>
+            </div>
           ) : (
             <div className="hidden md:flex gap-2">
               <Button variant="outline" asChild>
@@ -69,7 +72,7 @@ export function Header() {
           {/* Mobile Menu */}
           <Sheet>
             <SheetTrigger asChild>
-              <Button variant="ghost" size="icon" className="md:hidden">
+              <Button variant="ghost" size="icon" className="md:hidden text-foreground">
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">打开菜单</span>
               </Button>

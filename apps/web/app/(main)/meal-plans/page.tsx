@@ -14,7 +14,7 @@ import {
   type DragEndEvent,
   type DragStartEvent,
 } from "@dnd-kit/core"
-import { Button } from "@/components/ui/button"
+import { Button } from "@repo/ui/button"
 import { ChevronLeft, ChevronRight, Save, FileDown, Trash2 } from "lucide-react"
 import { DroppableMealCell } from "@/components/features/meal-plans/droppable-meal-cell"
 import { DraggableRecipe } from "@/components/features/meal-plans/draggable-recipe"

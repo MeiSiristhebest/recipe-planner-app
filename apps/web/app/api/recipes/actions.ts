@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
-import { recipeSchema } from "@recipe-planner/validators"
+import { recipeSchema } from "@repo/validators"
 import { redirect } from "next/navigation"
 
 export async function createRecipe(formData: FormData) {

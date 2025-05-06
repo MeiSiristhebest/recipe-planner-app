@@ -1,7 +1,7 @@
 import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
-import { mealPlanSchema } from "@recipe-planner/validators"
+import { mealPlanSchema } from "@repo/validators"
 
 export async function GET(request: NextRequest) {
   try {

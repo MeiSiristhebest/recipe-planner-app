@@ -1,7 +1,7 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
+import { Button } from "@repo/ui/button"
 import {
   Dialog,
   DialogContent,
@@ -9,9 +9,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog"
-import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+} from "@repo/ui/dialog"
+import { Input } from "@repo/ui/input"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs"
 import { Share2, Copy, Check, Facebook, Twitter, Linkedin, Mail } from "lucide-react"
 import { QRCodeSVG } from "qrcode.react"
 

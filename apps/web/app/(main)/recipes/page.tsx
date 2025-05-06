@@ -1,7 +1,7 @@
 import { Suspense } from "react"
 import { RecipeList } from "@/components/features/recipes/recipe-list"
 import { SearchFilters } from "@/components/features/recipes/search-filters"
-import { Skeleton } from "@/components/ui/skeleton"
+import { Skeleton } from "@repo/ui/skeleton"
 
 interface RecipesPageProps {
   searchParams: {

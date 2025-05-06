@@ -2,67 +2,118 @@
 @tailwind components;
 @tailwind utilities;
 
+/* 使用中国CDN加载字体 */
+/*
+@font-face {
+  font-family: "Noto Sans SC";
+  font-style: normal;
+  font-weight: 400;
+  font-display: swap;
+  src: url("https://fonts.font.im/css?family=Noto+Sans+SC:400,500,700&display=swap") format("woff2");
+}
+
+@font-face {
+  font-family: "Noto Sans SC";
+  font-style: normal;
+  font-weight: 500;
+  font-display: swap;
+  src: url("https://fonts.font.im/css?family=Noto+Sans+SC:400,500,700&display=swap") format("woff2");
+}
+
+@font-face {
+  font-family: "Noto Sans SC";
+  font-style: normal;
+  font-weight: 700;
+  font-display: swap;
+  src: url("https://fonts.font.im/css?family=Noto+Sans+SC:400,500,700&display=swap") format("woff2");
+}
+*/
+
+body {
+  font-family: "Noto Sans SC", "PingFang SC", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
+}
+
+@layer utilities {
+  .text-balance {
+    text-wrap: balance;
+  }
+}
+
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222.2 84% 4.9%;
-
-    --card: 0 0% 100%;
-    --card-foreground: 222.2 84% 4.9%;
-
+    --background: 240 10% 99%; /* #F8F9FA */
+    --foreground: 0 0% 20%;    /* #333333 */
+    --card: 0 0% 100%;         /* #FFFFFF */
+    --card-foreground: 0 0% 20%; /* #333333 */
     --popover: 0 0% 100%;
-    --popover-foreground: 222.2 84% 4.9%;
-
-    --primary: 32 100% 55%;
-    --primary-foreground: 210 40% 98%;
-
-    --secondary: 172 71% 45%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
-
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
-
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
-
+    --popover-foreground: 0 0% 20%;
+    --primary: 28 100% 55%;  /* #FF9F1C */
+    --primary-foreground: 0 0% 100%; /* White for better contrast on orange */
+    --secondary: 174 65% 50%; /* #2EC4B6 */
+    --secondary-foreground: 0 0% 100%; /* White for better contrast on mint green */
+    --muted: 210 17% 90%;    /* Lighter version of #CED4DA for muted backgrounds */
+    --muted-foreground: 210 10% 40%; /* Darker gray for muted text */
+    --accent: 51 100% 50%;   /* #FFD700 (Gold) */
+    --accent-foreground: 0 0% 13%; /* Dark text for Gold accent */
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --destructive-foreground: 0 0% 98%;
+    --border: 210 17% 82%;     /* #CED4DA */
+    --input: 210 17% 82%;
+    --ring: 28 100% 55%; /* Primary color for rings */
+    
+    --chart-1: 28 100% 65%; /* Lighter Orange */
+    --chart-2: 174 65% 60%; /* Lighter Mint */
+    --chart-3: 35 90% 60%;  /* Yellowish Orange */
+    --chart-4: 190 50% 55%; /* Tealish Blue */
+    --chart-5: 0 0% 50%;    /* Neutral Gray */
 
     --radius: 0.5rem;
+
+    --sidebar-background: 0 0% 100%; /* White */
+    --sidebar-foreground: 0 0% 20%;    /* Dark Gray Text */
+    --sidebar-primary: 28 100% 55%;    /* Orange */
+    --sidebar-primary-foreground: 0 0% 100%; /* White */
+    --sidebar-accent: 174 65% 90%;   /* Light Mint */
+    --sidebar-accent-foreground: 174 65% 30%; /* Darker Mint */
+    --sidebar-border: 210 17% 82%;   /* Light Gray Border */
+    --sidebar-ring: 28 100% 55%;     /* Orange Ring */
   }
 
   .dark {
-    --background: 222.2 84% 4.9%;
-    --foreground: 210 40% 98%;
+    --background: 0 0% 13%;    /* Darker Background */
+    --foreground: 0 0% 90%;    /* Lighter Text */
+    --card: 0 0% 18%;         /* Darker Card */
+    --card-foreground: 0 0% 90%;
+    --popover: 0 0% 18%;
+    --popover-foreground: 0 0% 90%;
+    --primary: 28 100% 60%;  /* Slightly brighter Orange for dark mode */
+    --primary-foreground: 0 0% 10%; /* Darker text on orange */
+    --secondary: 174 65% 55%; /* Slightly brighter Mint for dark mode */
+    --secondary-foreground: 0 0% 10%; /* Darker text on mint */
+    --muted: 0 0% 25%;       /* Darker Muted Background */
+    --muted-foreground: 0 0% 65%; /* Lighter Muted Text */
+    --accent: 51 100% 55%;   /* Brighter Gold for Dark Mode */
+    --accent-foreground: 0 0% 10%; /* Darker text for Gold accent */
+    --destructive: 0 70% 50%;
+    --destructive-foreground: 0 0% 90%;
+    --border: 0 0% 30%;        /* Darker Border */
+    --input: 0 0% 30%;
+    --ring: 28 100% 60%;
 
-    --card: 222.2 84% 4.9%;
-    --card-foreground: 210 40% 98%;
+    --chart-1: 28 100% 70%;
+    --chart-2: 174 65% 65%;
+    --chart-3: 35 90% 65%;
+    --chart-4: 190 50% 60%;
+    --chart-5: 0 0% 60%;
 
-    --popover: 222.2 84% 4.9%;
-    --popover-foreground: 210 40% 98%;
-
-    --primary: 32 100% 55%;
-    --primary-foreground: 222.2 47.4% 11.2%;
-
-    --secondary: 172 71% 45%;
-    --secondary-foreground: 210 40% 98%;
-
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
-
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
-
-    --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
-
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
+    --sidebar-background: 0 0% 10%;    /* Very Dark for Sidebar */
+    --sidebar-foreground: 0 0% 85%;
+    --sidebar-primary: 28 100% 60%;
+    --sidebar-primary-foreground: 0 0% 10%;
+    --sidebar-accent: 174 65% 25%;   /* Darker Mint Accent */
+    --sidebar-accent-foreground: 174 65% 80%; /* Lighter Mint Text on Accent */
+    --sidebar-border: 0 0% 25%;
+    --sidebar-ring: 28 100% 60%;
   }
 }
 
@@ -72,11 +123,6 @@
   }
   body {
     @apply bg-background text-foreground;
-    font-feature-settings: "rlig" 1, "calt" 1;
+    font-family: "Noto Sans SC", -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", "微软雅黑", Arial, sans-serif;
   }
-}
-
-:root {
-  --font-sans: var(--font-inter), var(--font-noto-sans-sc), system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, "Helvetica Neue", sans-serif;
 }

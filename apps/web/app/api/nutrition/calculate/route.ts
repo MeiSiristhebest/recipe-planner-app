@@ -5,7 +5,7 @@ import {
   calculateIngredientNutrition,
   sumNutritionValues,
   roundNutritionValues,
-} from "@recipe-planner/utils/src/nutrition-utils"
+} from "@repo/utils"
 
 interface Ingredient {
   name: string

@@ -1,11 +1,11 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@/components/ui/dialog"
-import { Card, CardContent } from "@/components/ui/card"
-import { Label } from "@/components/ui/label"
+import { Button } from "@repo/ui/button"
+import { Input } from "@repo/ui/input"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogFooter } from "@repo/ui/dialog"
+import { Card, CardContent } from "@repo/ui/card"
+import { Label } from "@repo/ui/label"
 import type { MealPlanItem } from "@/store/meal-plan-store"
 
 interface TemplateModalProps {

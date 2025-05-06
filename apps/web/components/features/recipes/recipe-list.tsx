@@ -5,8 +5,8 @@ import Link from "next/link"
 import Image from "next/image"
 import { useInfiniteQuery } from "@tanstack/react-query"
 import { useInView } from "react-intersection-observer"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
-import { Button } from "@/components/ui/button"
+import { Card, CardContent, CardFooter } from "@repo/ui/card"
+import { Button } from "@repo/ui/button"
 import type { Recipe } from "@recipe-planner/types"
 
 interface RecipeListProps {

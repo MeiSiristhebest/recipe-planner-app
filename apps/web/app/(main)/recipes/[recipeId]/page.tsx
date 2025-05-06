@@ -1,11 +1,11 @@
 import Image from "next/image"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Textarea } from "@/components/ui/textarea"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@repo/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs"
+import { Textarea } from "@repo/ui/textarea"
+import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/avatar"
 import { Clock, ChefHat, Users, Heart, Plus, Star } from "lucide-react"
 import { ShareDialog } from "@/components/features/recipes/share-dialog"
-import { NutritionDisplay } from "@/components/nutrition-display"
+import { NutritionDisplay } from "@/components/features/nutrition/nutrition-display"
 
 export default function RecipeDetailPage({ params }: { params: { recipeId: string } }) {
   return (
@@ -28,17 +28,19 @@ export default function RecipeDetailPage({ params }: { params: { recipeId: strin
                 <span className="ml-2 text-sm text-muted-foreground">4.0 (120 评价)</span>
               </div>
               <div className="flex items-center text-sm text-muted-foreground">
-                <Avatar className="h-6 w-6 mr-2">
-                  <AvatarImage src="/placeholder.svg" alt="@username" />
-                  <AvatarFallback>UN</AvatarFallback>
-                </Avatar>
+                <div className="relative h-6 w-6 mr-2">
+                  <Avatar className="h-6 w-6">
+                    <AvatarImage src="https://randomuser.me/api/portraits/men/75.jpg" alt="@username" />
+                    <AvatarFallback>UN</AvatarFallback>
+                  </Avatar>
+                </div>
                 <span>由 张厨师 发布</span>
               </div>
             </div>
 
             {/* Recipe Image */}
             <div className="relative aspect-video rounded-lg overflow-hidden">
-              <Image src="/placeholder.svg" alt="香煎三文鱼配芦笋" fill className="object-cover" />
+              <Image src="https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?q=80&w=1170&auto=format&fit=crop" alt="香煎三文鱼配芦笋" fill className="object-cover" />
             </div>
           </div>
 
@@ -214,10 +216,12 @@ export default function RecipeDetailPage({ params }: { params: { recipeId: strin
                 {Array.from({ length: 3 }).map((_, i) => (
                   <div key={i} className="p-4 border rounded-lg">
                     <div className="flex items-center gap-2 mb-2">
-                      <Avatar>
-                        <AvatarImage src="/placeholder.svg" alt="@username" />
-                        <AvatarFallback>UN</AvatarFallback>
-                      </Avatar>
+                      <div className="relative">
+                        <Avatar>
+                          <AvatarImage src="https://randomuser.me/api/portraits/women/68.jpg" alt="@username" />
+                          <AvatarFallback>UN</AvatarFallback>
+                        </Avatar>
+                      </div>
                       <div>
                         <div className="font-medium">用户名</div>
                         <div className="text-xs text-muted-foreground">2023年12月15日</div>
@@ -241,7 +245,7 @@ export default function RecipeDetailPage({ params }: { params: { recipeId: strin
               {Array.from({ length: 3 }).map((_, i) => (
                 <div key={i} className="flex gap-3">
                   <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0">
-                    <Image src="/placeholder.svg" alt="相关食谱" fill className="object-cover" />
+                    <Image src="https://images.unsplash.com/photo-1600891963935-9e8c951956a2?q=80&w=200&auto=format&fit=crop" alt="相关食谱" fill className="object-cover" />
                   </div>
                   <div>
                     <h4 className="font-medium text-sm">柠檬香草烤鱼</h4>

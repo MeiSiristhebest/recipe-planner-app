@@ -1,3 +1,3 @@
-import { prisma } from "@recipe-planner/prisma-db"
+import { prisma } from "@repo/db"
 
 export { prisma }

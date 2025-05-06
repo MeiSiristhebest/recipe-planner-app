@@ -1,5 +1,21 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
+# Project Overview and Core Technologies
+
+- **Project Goal:** Develop a "Recipe Sharing and Weekly Meal Plan Helper" web application.
+- **Core Framework:** [Next.js 14](mdc:https:/nextjs.org) using the App Router.
+- **Language:** [TypeScript](mdc:https:/www.typescriptlang.org).
+- **UI Library:** [React 18+](mdc:https:/react.dev).
+- **Styling:** [TailwindCSS](mdc:https:/tailwindcss.com).
+- **UI Components:** [Shadcn/ui](mdc:https:/ui.shadcn.com) built on Radix UI.
+- **Database ORM:** [Prisma](mdc:https:/www.prisma.io).
+- **Authentication:** [NextAuth.js](mdc:https:/next-auth.js.org).
+- **State Management:** 
+    - Client-side: [Zustand](mdc:https:/github.com/pmndrs/zustand).
+    - Server-side: [React Query (TanStack Query v5)](mdc:https:/tanstack.com/query/latest).
+- **Form Handling:** [React Hook Form](mdc:https:/react-hook-form.com) with [Zod](mdc:https:/zod.dev) for validation.
+- **Interactivity:** [DnD Kit](mdc:https:/dndkit.com) (Drag and Drop), [Framer Motion](mdc:https:/www.framer.com/motion) (Animations).
+

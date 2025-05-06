@@ -1,9 +1,14 @@
+"use client";
+
 import Link from "next/link"
 import Image from "next/image"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Card, CardContent, CardFooter } from "@/components/ui/card"
+import { Button } from "@repo/ui/button"
+import { Input } from "@repo/ui/input"
+import { Card, CardContent, CardFooter } from "@repo/ui/card"
 import { Search } from "lucide-react"
+import { toast } from "sonner"
+// import { getRandomRecipeImage } from "@/config/image-resources"; // No longer needed for fixed images here
+import React, { useState, useEffect } from 'react';
 
 export default function Home() {
   return (
@@ -31,7 +36,7 @@ export default function Home() {
             </div>
             <div className="flex justify-center">
               <Image
-                src="/placeholder.svg"
+                src="https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&h=500&auto=format&fit=crop" // Fixed Hero Image
                 alt="美味食谱"
                 width={500}
                 height={500}
@@ -53,7 +58,7 @@ export default function Home() {
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
             {Array.from({ length: 6 }).map((_, i) => (
-              <RecipeCard key={i} />
+              <RecipeCard key={i} fixedImageUrl={`https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=687&auto=format&fit=crop&h=400&index=${i}`} />
             ))}
           </div>
           <div className="flex justify-center mt-8">
@@ -114,25 +119,34 @@ export default function Home() {
   )
 }
 
-function RecipeCard() {
+interface RecipeCardProps {
+  fixedImageUrl?: string;
+}
+
+function RecipeCard({ fixedImageUrl }: RecipeCardProps) {
+  // No longer need useState/useEffect for image if passed as prop or fixed internally
+  const imageUrl = fixedImageUrl || "https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=687&auto=format&fit=crop&h=400"; // Default fixed image
+
   return (
-    <Card className="overflow-hidden">
-      <div className="aspect-video relative">
-        <Image src="/placeholder.svg" alt="食谱图片" fill className="object-cover" />
+    <Card className="overflow-hidden transition-all duration-300 ease-in-out hover:shadow-xl hover:border-primary">
+      <div className="aspect-video relative bg-muted">
+        {imageUrl && (
+          <Image src={imageUrl} alt="食谱图片" fill className="object-cover" />
+        )}
       </div>
       <CardContent className="p-4">
         <div className="flex justify-between items-start">
           <div>
-            <h3 className="font-bold">美味食谱标题</h3>
-            <p className="text-sm text-muted-foreground">烹饪时间: 30分钟</p>
+            <h3 className="text-xl font-semibold leading-snug">美味食谱标题</h3>
+            <p className="text-sm text-muted-foreground mt-1">烹饪时间: 30分钟</p>
           </div>
           <div className="flex items-center">
-            <span className="text-sm font-medium">4.5</span>
+            <span className="text-sm font-medium text-foreground mr-1">4.5</span>
             <svg
               xmlns="http://www.w3.org/2000/svg"
               viewBox="0 0 24 24"
               fill="currentColor"
-              className="w-4 h-4 text-yellow-500 ml-1"
+              className="w-4 h-4 text-accent"
             >
               <path
                 fillRule="evenodd"
@@ -143,10 +157,12 @@ function RecipeCard() {
           </div>
         </div>
         <div className="flex gap-2 mt-2">
-          <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold">
+          <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground bg-secondary/80 hover:bg-secondary">
             家常菜
           </span>
-          <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold">简单</span>
+          <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
+            简单
+          </span>
         </div>
       </CardContent>
       <CardFooter className="p-4 pt-0">

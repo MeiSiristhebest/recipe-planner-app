@@ -3,8 +3,8 @@
 import type React from "react"
 
 import { useState } from "react"
-import { Input } from "@/components/ui/input"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { Input } from "@repo/ui/input"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs"
 import { DraggableRecipe } from "./draggable-recipe"
 import { Search } from "lucide-react"
 import type { Recipe } from "@recipe-planner/types"

@@ -3,7 +3,7 @@
 import { useSortable } from "@dnd-kit/sortable"
 import { CSS } from "@dnd-kit/utilities"
 import Image from "next/image"
-import { Button } from "@/components/ui/button"
+import { Button } from "@repo/ui/button"
 import { Trash2 } from "lucide-react"
 import type { Recipe } from "@recipe-planner/types"
 

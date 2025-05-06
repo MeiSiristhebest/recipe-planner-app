@@ -1,0 +1,17 @@
+{
+  "root": true,
+  "extends": ["custom", "next/core-web-vitals"],
+  "parserOptions": {
+    "project": ["./tsconfig.json"],
+    "tsconfigRootDir": "."
+  },
+  "rules": {
+     "react/no-unescaped-entities": "off"
+  },
+  "ignorePatterns": [
+     "node_modules/",
+     "dist/",
+     ".turbo/",
+     ".next/"
+  ]
+}

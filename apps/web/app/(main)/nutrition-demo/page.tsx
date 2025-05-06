@@ -1,7 +1,9 @@
 "use client"
 
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
-import { NutritionCalculator } from "@/components/nutrition-calculator"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@repo/ui/card"
+import { NutritionCalculator } from "@/components/features/nutrition/nutrition-calculator"
+import { useForm } from "react-hook-form"
+import { Button } from "@repo/ui/button"
 
 export default function NutritionDemoPage() {
   return (

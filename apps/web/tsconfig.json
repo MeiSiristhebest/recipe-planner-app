@@ -1,0 +1,24 @@
+{
+  "extends": "../../tsconfig.json", // Inherit from root tsconfig (adjust path if needed)
+  "compilerOptions": {
+    // Most options are inherited from tsconfig.base.json via tsconfig.json
+    // Only override or add specific options for the web app if necessary
+    "lib": ["dom", "dom.iterable", "esnext"], // Keep lib specific to DOM environment
+    "allowJs": true,
+    "noEmit": true, // Typically true for Next.js apps
+    "jsx": "preserve" // Required for Next.js
+    // Paths are inherited from the root tsconfig.json
+    // baseUrl is inherited
+  },
+  "include": [
+    "next-env.d.ts",
+    ".next/types/**/*.ts",
+    "**/*.ts",
+    "**/*.tsx"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next", // Also exclude the build output
+    "dist" // If you have a dist folder
+  ]
+}

@@ -1,7 +1,7 @@
 "use client"
 
 import { useDroppable } from "@dnd-kit/core"
-import { Button } from "@/components/ui/button"
+import { Button } from "@repo/ui/button"
 import { Plus } from "lucide-react"
 import { DraggableRecipe } from "./draggable-recipe"
 import type { MealPlanItem } from "@/store/meal-plan-store"

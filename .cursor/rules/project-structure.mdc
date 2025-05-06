@@ -1,5 +1,33 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
+# Project Structure (Next.js 14 App Router)
+
+- **Main Application Code:** Lives in `[app/](mdc:app)`.
+- **Routing:** Uses App Router conventions with Route Groups.
+    - `[(auth)](mdc:app/(auth)/)`: Authentication pages (login, register).
+    - `[(main)](mdc:app/(main)/)`: Main application pages requiring authentication (recipes, meal plans, etc.).
+    - Root Layout: `[app/layout.tsx](mdc:app/layout.tsx)`.
+    - Homepage: `[app/page.tsx](mdc:app/page.tsx)`.
+- **API Routes:** Located in `[app/api/](mdc:app/api)` using Route Handlers.
+    - NextAuth.js handler: `[app/api/auth/[...nextauth]/route.ts](mdc:app/api/auth/[...nextauth]/route.ts)`.
+- **UI Components:**
+    - Global/Reusable (Shadcn): `[app/ui/](mdc:app/ui)`.
+    - Feature-Specific: `[components/features/](mdc:components/features)`.
+    - Shared Across Features: `[components/shared/](mdc:components/shared)`.
+- **Library/Utilities:** `[lib/](mdc:lib)` directory contains:
+    - Prisma Client: `[lib/db.ts](mdc:lib/db.ts)` (likely).
+    - Utility Functions: `[lib/utils.ts](mdc:lib/utils.ts)`.
+    - Custom Hooks: `[lib/hooks/](mdc:lib/hooks)`.
+    - Zod Validators: `[lib/validators/](mdc:lib/validators)`.
+- **Database Schema:** `[prisma/schema.prisma](mdc:prisma/schema.prisma)`.
+- **Database Migrations:** `[prisma/migrations/](mdc:prisma/migrations)`.
+- **Static Assets:** `[public/](mdc:public)`.
+- **TypeScript Types:** Defined in `[types/](mdc:types)`.
+- **Configuration Files:**
+    - Tailwind: `[tailwind.config.ts](mdc:tailwind.config.ts)`.
+    - TypeScript: `[tsconfig.json](mdc:tsconfig.json)`.
+    - Next.js: `[next.config.mjs](mdc:next.config.mjs)`.
+

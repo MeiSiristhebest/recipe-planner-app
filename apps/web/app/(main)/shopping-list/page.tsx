@@ -1,10 +1,10 @@
 "use client"
 
 import { useState } from "react"
-import { Button } from "@/components/ui/button"
-import { Input } from "@/components/ui/input"
-import { Checkbox } from "@/components/ui/checkbox"
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/components/ui/accordion"
+import { Button } from "@repo/ui/button"
+import { Input } from "@repo/ui/input"
+import { Checkbox } from "@repo/ui/checkbox"
+import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@repo/ui/accordion"
 import { Plus, Printer, Share2, Trash2, Check, X } from "lucide-react"
 
 // Sample data structure

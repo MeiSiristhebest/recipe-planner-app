@@ -1,5 +1,15 @@
 ---
-description:
-globs:
+description: 
+globs: 
 alwaysApply: false
 ---
+# Data Management and API Strategy
+
+- **Database ORM:** [Prisma](mdc:https:/www.prisma.io) is used for database interactions. The schema is defined in `[prisma/schema.prisma](mdc:prisma/schema.prisma)`. The Prisma client is likely initialized in `[lib/db.ts](mdc:lib/db.ts)`.
+- **API Layer:** APIs are built using Next.js Route Handlers located within `[app/api/](mdc:app/api)`. Follow RESTful principles.
+- **Authentication:** Handled by [NextAuth.js](mdc:https:/next-auth.js.org). Configuration and providers are in `[app/api/auth/[...nextauth]/route.ts](mdc:app/api/auth/[...nextauth]/route.ts)`. API routes should be protected using session checks.
+- **Server State Management:** Use [React Query (TanStack Query v5)](mdc:https:/tanstack.com/query/latest) for fetching, caching, and synchronizing server data. Use `useQuery` for fetching and `useMutation` for updates/creations/deletions.
+- **Client State Management:** Use [Zustand](mdc:https:/github.com/pmndrs/zustand) for managing global client-side state (e.g., UI toggles, non-persistent user preferences).
+- **Validation:** Use [Zod](mdc:https:/zod.dev) for validating API input and form data. Schemas might be located in `[lib/validators/](mdc:lib/validators)`.
+- **Type Safety:** Use TypeScript throughout. Define shared types in `[types/](mdc:types)`. Prisma generates types based on the schema.
+

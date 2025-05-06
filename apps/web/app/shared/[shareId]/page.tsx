@@ -1,15 +1,32 @@
 import { notFound } from "next/navigation"
 import Image from "next/image"
-import { Button } from "@/components/ui/button"
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
+import { Button } from "@repo/ui/button"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs"
+import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/avatar"
 import { Clock, ChefHat, Users, Star } from "lucide-react"
 import { createClient } from "@supabase/supabase-js"
 
 // 初始化Supabase客户端
-const supabaseUrl = process.env.SUPABASE_SUPABASE_NEXT_PUBLIC_SUPABASE_URL || ""
-const supabaseKey = process.env.SUPABASE_SUPABASE_ANON_KEY || ""
-const supabase = createClient(supabaseUrl, supabaseKey)
+const supabaseUrl = "https://desoaoudgnhrhdpsqcbu.supabase.co"
+const supabaseKey = "1e543fe4e8ffdd81c53a42edca7a15cd048839b5a228c97a05b63ef0fe736ab2"
+
+// 创建Supabase客户端，添加重试和超时配置
+const supabase = createClient(supabaseUrl, supabaseKey, {
+  auth: {
+    persistSession: false,
+    autoRefreshToken: false,
+  },
+  global: {
+    // 减少超时时间，避免长时间等待
+    fetch: (url, options) => {
+      return fetch(url, {
+        ...options,
+        // 设置较短的超时时间
+        signal: AbortSignal.timeout(10000), // 10秒超时
+      })
+    },
+  },
+})
 
 async function getSharedRecipe(shareId: string) {
   const { data, error } = await supabase.from("recipe_shares").select("*").eq("share_id", shareId).single()
