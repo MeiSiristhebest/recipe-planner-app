@@ -69,12 +69,15 @@ export function Header() {
             </div>
           )}
 
-          {/* Mobile Menu */}
+          {/* Mobile Menu - Temporarily Commented Out for Debugging */}
+          {/*
           <Sheet>
             <SheetTrigger asChild>
               <Button variant="ghost" size="icon" className="md:hidden text-foreground">
+                <>
                 <Menu className="h-5 w-5" />
                 <span className="sr-only">打开菜单</span>
+                </>
               </Button>
             </SheetTrigger>
             <SheetContent side="right">
@@ -104,6 +107,7 @@ export function Header() {
               </nav>
             </SheetContent>
           </Sheet>
+          */}
         </div>
       </div>
     </header>

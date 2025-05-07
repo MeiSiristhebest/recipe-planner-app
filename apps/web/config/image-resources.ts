@@ -13,6 +13,9 @@ export const recipeImages: string[] = [
   "https://images.unsplash.com/photo-1512621776951-a57141f2eefd?q=80&w=1170&auto=format&fit=crop",
 ];
 
+// 默认图片，以防任何列表为空或索引无效
+const DEFAULT_IMAGE_URL = "https://images.unsplash.com/photo-1546069901-ba9599a7e63c?q=80&w=500&h=500&auto=format&fit=crop";
+
 // 主食类食谱
 export const mainDishImages: string[] = [
   "https://images.unsplash.com/photo-1519708227418-c8fd9a32b7a2?q=80&w=1170&auto=format&fit=crop", // 三文鱼
@@ -51,42 +54,51 @@ export const userAvatars: string[] = [
  * 获取随机食谱图片
  */
 export const getRandomRecipeImage = (): string => {
+  if (recipeImages.length === 0) {
+    return DEFAULT_IMAGE_URL;
+  }
   const index = Math.floor(Math.random() * recipeImages.length);
-  return recipeImages[index >= 0 && index < recipeImages.length ? index : 0];
+  return recipeImages[index] ?? DEFAULT_IMAGE_URL;
 };
 
 /**
  * 获取随机用户头像
  */
 export const getRandomUserAvatar = (): string => {
+  if (userAvatars.length === 0) {
+    return DEFAULT_IMAGE_URL; // 也可以考虑为头像设置一个不同的默认图片
+  }
   const index = Math.floor(Math.random() * userAvatars.length);
-  return userAvatars[index >= 0 && index < userAvatars.length ? index : 0];
+  return userAvatars[index] ?? DEFAULT_IMAGE_URL;
 };
 
 /**
  * 根据类别获取食谱图片
  */
 export const getRecipeImageByCategory = (category: 'main' | 'dessert' | 'drink' | 'all'): string => {
-  let index = 0;
-  let images: string[] = recipeImages;
+  let images: string[] = [];
   
   switch (category) {
     case 'main':
       images = mainDishImages;
-      index = Math.floor(Math.random() * mainDishImages.length);
       break;
     case 'dessert':
       images = dessertImages;
-      index = Math.floor(Math.random() * dessertImages.length);
       break;
     case 'drink':
       images = drinkImages;
-      index = Math.floor(Math.random() * drinkImages.length);
       break;
     case 'all':
     default:
+      // 如果是 'all' 或者未知类别，直接调用 getRandomRecipeImage
       return getRandomRecipeImage();
   }
   
-  return images[index >= 0 && index < images.length ? index : 0];
-}; 
+  // 如果特定类别的图片列表为空，则退回到通用的随机食谱图片
+  if (images.length === 0) {
+    return getRandomRecipeImage();
+  }
+  
+  const index = Math.floor(Math.random() * images.length);
+  return images[index] ?? DEFAULT_IMAGE_URL;
+};

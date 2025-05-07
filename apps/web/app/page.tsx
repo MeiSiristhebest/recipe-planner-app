@@ -5,10 +5,21 @@ import Image from "next/image"
 import { Button } from "@repo/ui/button"
 import { Input } from "@repo/ui/input"
 import { Card, CardContent, CardFooter } from "@repo/ui/card"
-import { Search } from "lucide-react"
+import { Search, Star } from "lucide-react"
 import { toast } from "sonner"
-// import { getRandomRecipeImage } from "@/config/image-resources"; // No longer needed for fixed images here
-import React, { useState, useEffect } from 'react';
+import { useQuery } from '@tanstack/react-query'
+import { type Recipe } from '@recipe-planner/types'
+import { Skeleton } from "@repo/ui/skeleton"
+
+// API function to fetch recipes (adjust URL and params as needed)
+async function fetchFeaturedRecipes(): Promise<{ recipes: Recipe[], total: number }> {
+  // Fetch, for example, 6 recipes sorted by rating or creation date
+  const response = await fetch('/api/recipes?limit=6&sort=newest') // Or sort=rating_desc
+  if (!response.ok) {
+    throw new Error('Failed to fetch recipes')
+  }
+  return response.json()
+}
 
 export default function Home() {
   return (
@@ -30,7 +41,7 @@ export default function Home() {
                   <Input type="search" placeholder="搜索食谱、食材或关键词..." className="pl-8 w-full" />
                 </div>
                 <Button asChild>
-                  <Link href="/recipes">搜索</Link>
+                  <Link href="/recipes" key="hero-search-link">搜索</Link>
                 </Button>
               </div>
             </div>
@@ -49,26 +60,7 @@ export default function Home() {
       </section>
 
       {/* Featured Recipes */}
-      <section className="w-full py-12 md:py-24">
-        <div className="container px-4 md:px-6">
-          <div className="flex flex-col items-center justify-center space-y-4 text-center">
-            <div className="space-y-2">
-              <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">本周热门推荐</h2>
-              <p className="max-w-[600px] text-muted-foreground md:text-xl">发现最受欢迎的美味食谱，开启你的烹饪之旅</p>
-            </div>
-          </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
-            {Array.from({ length: 6 }).map((_, i) => (
-              <RecipeCard key={i} fixedImageUrl={`https://images.unsplash.com/photo-1555939594-58d7cb561ad1?q=80&w=687&auto=format&fit=crop&h=400&index=${i}`} />
-            ))}
-          </div>
-          <div className="flex justify-center mt-8">
-            <Button variant="outline" asChild>
-              <Link href="/recipes">查看更多食谱</Link>
-            </Button>
-          </div>
-        </div>
-      </section>
+      <FeaturedRecipes />
 
       {/* Quick Access */}
       <section className="w-full py-12 md:py-24 bg-muted">
@@ -87,7 +79,7 @@ export default function Home() {
               </CardContent>
               <CardFooter>
                 <Button variant="outline" className="w-full" asChild>
-                  <Link href="/meal-plans">查看计划</Link>
+                  <Link href="/meal-plans" key="meal-plans-link">查看计划</Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -98,7 +90,7 @@ export default function Home() {
               </CardContent>
               <CardFooter>
                 <Button variant="outline" className="w-full" asChild>
-                  <Link href="/shopping-list">查看清单</Link>
+                  <Link href="/shopping-list" key="shopping-list-link">查看清单</Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -109,7 +101,7 @@ export default function Home() {
               </CardContent>
               <CardFooter>
                 <Button variant="outline" className="w-full" asChild>
-                  <Link href="/recipes">查看食谱</Link>
+                  <Link href="/recipes" key="quick-access-recipes-link">查看食谱</Link>
                 </Button>
               </CardFooter>
             </Card>
@@ -120,56 +112,120 @@ export default function Home() {
   )
 }
 
-interface RecipeCardProps {
-  fixedImageUrl?: string;
-}
-
-function RecipeCard({ fixedImageUrl }: RecipeCardProps) {
-  // No longer need useState/useEffect for image if passed as prop or fixed internally
-  const imageUrl = fixedImageUrl || "https://images.unsplash.com/photo-1490645935967-10de6ba17061?q=80&w=687&auto=format&fit=crop&h=400"; // Default fixed image
+// New component for featured recipes section to handle data fetching
+function FeaturedRecipes() {
+  const { data, isLoading, error } = useQuery({
+    queryKey: ['featuredRecipes'],
+    queryFn: fetchFeaturedRecipes,
+  })
 
   return (
-    <Card className="overflow-hidden transition-all duration-300 ease-in-out hover:shadow-xl hover:border-primary">
-      <div className="aspect-video relative bg-muted">
-        {imageUrl && (
-          <Image src={imageUrl} alt="食谱图片" fill className="object-cover" />
-        )}
-      </div>
-      <CardContent className="p-4">
-        <div className="flex justify-between items-start">
-          <div>
-            <h3 className="text-xl font-semibold leading-snug">美味食谱标题</h3>
-            <p className="text-sm text-muted-foreground mt-1">烹饪时间: 30分钟</p>
-          </div>
-          <div className="flex items-center">
-            <span className="text-sm font-medium text-foreground mr-1">4.5</span>
-            <svg
-              xmlns="http://www.w3.org/2000/svg"
-              viewBox="0 0 24 24"
-              fill="currentColor"
-              className="w-4 h-4 text-accent"
-            >
-              <path
-                fillRule="evenodd"
-                d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.007 5.404.433c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.433 2.082-5.006z"
-                clipRule="evenodd"
-              />
-            </svg>
+    <section className="w-full py-12 md:py-24">
+      <div className="container px-4 md:px-6">
+        <div className="flex flex-col items-center justify-center space-y-4 text-center">
+          <div className="space-y-2">
+            <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">本周热门推荐</h2>
+            <p className="max-w-[600px] text-muted-foreground md:text-xl">发现最受欢迎的美味食谱，开启你的烹饪之旅</p>
           </div>
         </div>
-        <div className="flex gap-2 mt-2">
-          <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold text-secondary-foreground bg-secondary/80 hover:bg-secondary">
-            家常菜
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 mt-8">
+          {isLoading ? (
+            // Show skeleton loaders while loading
+            Array.from({ length: 6 }).map((_, i) => <RecipeCardSkeleton key={i} />)
+          ) : error ? (
+            <p className="col-span-full text-center text-destructive">加载食谱失败，请稍后再试。</p>
+          ) : data?.recipes && data.recipes.length > 0 ? (
+            data.recipes.map((recipe) => (
+              <RecipeCard key={recipe.id} recipe={recipe} />
+            ))
+          ) : (
+            <p className="col-span-full text-center text-muted-foreground">暂无推荐食谱。</p>
+          )}
+        </div>
+        <div className="flex justify-center mt-8">
+          <Button variant="outline" asChild>
+            <Link href="/recipes" key="featured-more-recipes-link">查看更多食谱</Link>
+          </Button>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+interface RecipeCardProps {
+  recipe: Recipe; // Now expects a full Recipe object
+}
+
+// Updated RecipeCard component
+function RecipeCard({ recipe }: RecipeCardProps) {
+  const fallbackImage = "/placeholder.svg" // Define a fallback image
+
+  // --- Rating Display --- 
+  // API now returns averageRating as null/0 and includes _count.ratings
+  const ratingCount = recipe._count?.ratings ?? 0;
+  const hasRatings = ratingCount > 0;
+  // const displayRating = recipe.averageRating?.toFixed(1) ?? "-"; // Calculation removed/commented as API doesn't provide it reliably here
+
+  return (
+    <Card className="overflow-hidden transition-all duration-300 ease-in-out hover:shadow-xl hover:border-primary flex flex-col h-full">
+      <div className="aspect-video relative bg-muted">
+        <Image
+          src={recipe.coverImage || fallbackImage}
+          alt={recipe.title}
+          fill
+          className="object-cover"
+          // Consider adding sizes for optimization if needed
+          onError={(e) => { (e.target as HTMLImageElement).src = fallbackImage; }} // Handle image loading errors
+        />
+      </div>
+      <CardContent className="p-4 flex-grow">
+        <div className="flex justify-between items-start mb-2">
+          <h3 className="text-lg font-semibold leading-snug flex-1 mr-2">{recipe.title}</h3>
+          <div className="flex items-center flex-shrink-0">
+            {/* Display star based on whether ratings exist */}
+            <Star className={`w-4 h-4 ${hasRatings ? "text-accent fill-accent" : "text-muted-foreground"}`} />
+            {/* Optionally display the count */}
+            <span className="text-xs text-muted-foreground ml-1">({ratingCount})</span>
+          </div>
+        </div>
+        <p className="text-sm text-muted-foreground mb-2">烹饪时间: {recipe.cookingTime}分钟</p>
+        <div className="flex flex-wrap gap-1">
+          {/* Assuming recipe.categories is Category[] based on updated type expectation */}
+          {recipe.categories?.map((category) => (
+            <span key={category.id} className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold text-secondary-foreground bg-secondary/80 hover:bg-secondary">
+              {category.name}
+            </span>
+          ))}
+          <span className="inline-flex items-center rounded-full border px-2 py-0.5 text-xs font-semibold text-muted-foreground">
+            {recipe.difficulty}
           </span>
-          <span className="inline-flex items-center rounded-full border px-2.5 py-0.5 text-xs font-semibold text-muted-foreground">
-            简单
-          </span>
+          {/* Add tags if needed */}
         </div>
       </CardContent>
-      <CardFooter className="p-4 pt-0">
+      <CardFooter className="p-4 pt-0 mt-auto">
         <Button variant="secondary" className="w-full" asChild>
-          <Link href="/recipes/1">查看详情</Link>
+          <Link href={`/recipes/${recipe.id}`} key={`rc-detail-${recipe.id}`}>查看详情</Link>
         </Button>
+      </CardFooter>
+    </Card>
+  )
+}
+
+// Skeleton component for RecipeCard
+function RecipeCardSkeleton() {
+  return (
+    <Card className="overflow-hidden flex flex-col h-full">
+      <Skeleton className="aspect-video w-full bg-muted" />
+      <CardContent className="p-4 flex-grow">
+        <Skeleton className="h-6 w-3/4 mb-2 bg-muted" />
+        <Skeleton className="h-4 w-1/2 mb-2 bg-muted" />
+        <div className="flex gap-2">
+          <Skeleton className="h-5 w-16 rounded-full bg-muted" />
+          <Skeleton className="h-5 w-12 rounded-full bg-muted" />
+        </div>
+      </CardContent>
+      <CardFooter className="p-4 pt-0 mt-auto">
+        <Skeleton className="h-10 w-full bg-muted" />
       </CardFooter>
     </Card>
   )

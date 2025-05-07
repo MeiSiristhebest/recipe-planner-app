@@ -31,6 +31,12 @@ export interface Recipe {
   author?: User;
   categories?: Category[];
   tags?: Tag[];
+  averageRating?: number;
+  _count?: {
+    comments?: number;
+    ratings?: number;
+    favorites?: number;
+  };
 }
 
 // 食材类型

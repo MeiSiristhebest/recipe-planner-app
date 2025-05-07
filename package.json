@@ -11,17 +11,19 @@
     "db:generate": "prisma generate --schema=./prisma/schema.prisma",
     "db:migrate:dev": "prisma migrate dev --schema=./prisma/schema.prisma",
     "db:studio": "prisma studio --schema=./prisma/schema.prisma",
+    "db:seed": "pnpm exec ts-node prisma/seed.ts",
     "dev:web": "pnpm exec turbo run dev --filter=web",
     "dev:mobile": "pnpm exec turbo run dev --filter=mobile"
   },
   "devDependencies": {
     "@changesets/cli": "^2.27.1",
-    "@types/node": "^20.10.0",
+    "@types/node": "^20.17.40",
     "dotenv-cli": "^7.3.0",
     "eslint": "^8.56.0",
     "eslint-config-custom": "workspace:*",
     "prettier": "^3.2.5",
     "prisma": "^5.10.2",
+    "ts-node": "^10.9.2",
     "turbo": "^1.12.4",
     "typescript": "^5.3.3"
   },
