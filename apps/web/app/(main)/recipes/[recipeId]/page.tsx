@@ -1,6 +1,6 @@
 'use client'; // Mark as client component for data fetching hooks
 
-import { useState } from 'react'; // Added useState
+import { useState, useEffect } from 'react'; // Re-added useEffect
 import { useSession } from 'next-auth/react'; // Added useSession
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'; // Added useMutation and useQueryClient
 import { useParams } from 'next/navigation'; // Use if needed, but params are passed as props in App Router
@@ -9,7 +9,7 @@ import { Button } from "@repo/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs"
 import { Textarea } from "@repo/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/avatar"
-import { Clock, ChefHat, Users, Heart, Plus, Star, Loader2, Send } from "lucide-react"
+import { Clock, ChefHat, Users, Heart, Plus, Star, Loader2, Send, LinkIcon } from "lucide-react"
 import { ShareDialog } from "@/components/features/recipes/share-dialog"
 import { NutritionDisplay } from "@/components/features/nutrition/nutrition-display"
 import { type Recipe, type Comment, type User } from "@recipe-planner/types"; // Assuming Comment type is available
@@ -17,10 +17,24 @@ import { Skeleton } from "@repo/ui/skeleton"
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
 import Link from 'next/link'; // Added Link for navigation
+import { IngredientList, type Ingredient as IngredientUIData } from "@repo/ui/ingredient-list"; // Re-added IngredientList
 
 // Type for combined recipe and comments data
 interface RecipeDetailData extends Recipe {
   comments: (Comment & { user: User })[]; // Expect comments with user data
+  isFavoritedByCurrentUser?: boolean; // Re-added
+  favoritesCount?: number; // Re-added
+  // Assuming nutrition data is nested under 'nutrition' object of NutritionInfo type
+  nutrition?: { 
+    calories: number;
+    protein: number;
+    fat: number;
+    carbs: number;
+    fiber?: number;
+    sugar?: number;
+    sodium?: number;
+    servingSize?: string;
+  };
   // Add other expected relations like author, categories, tags if needed
 }
 
@@ -68,19 +82,45 @@ async function fetchRelatedRecipes(recipeId: string, limit: number = 3): Promise
   return response.json();
 }
 
+// Re-added API function to toggle favorite status
+async function toggleFavoriteRecipe({ recipeId, favorited }: { recipeId: string; favorited: boolean }): Promise<{ favorited: boolean; favoritesCount: number }> {
+  const response = await fetch(`/api/recipes/${recipeId}/favorite`, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ favorited }), 
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({}));
+    throw new Error(errorData.error || 'Failed to update favorite status');
+  }
+  return response.json(); 
+}
+
 export default function RecipeDetailPage({ params }: { params: { recipeId: string } }) {
   const { recipeId } = params;
-  const { data: session } = useSession(); // Get session
-  const queryClient = useQueryClient(); // For invalidating queries
+  const { data: session } = useSession();
+  const queryClient = useQueryClient();
 
   const [commentText, setCommentText] = useState('');
   const [commentError, setCommentError] = useState<string | null>(null);
+  const [isFavorited, setIsFavorited] = useState(false);
+  const [favoriteCount, setFavoriteCount] = useState(0);
+  const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
+  // const [isAddToMealPlanDialogOpen, setIsAddToMealPlanDialogOpen] = useState(false); // For later use
 
   const { data: recipe, isLoading, error: queryError, isError } = useQuery<RecipeDetailData, Error>({
     queryKey: ['recipeDetails', recipeId],
     queryFn: () => fetchRecipeDetails(recipeId),
-    enabled: !!recipeId, // Only run query if recipeId is available
+    enabled: !!recipeId,
   });
+
+  // useEffect to update local state when recipe data is fetched or changed
+  useEffect(() => {
+    if (recipe) {
+      setIsFavorited(!!recipe.isFavoritedByCurrentUser);
+      setFavoriteCount(recipe.favoritesCount || 0);
+    }
+  }, [recipe]); // Dependency array includes recipe
 
   // Query for related recipes
   const { data: relatedRecipes, isLoading: isLoadingRelated } = useQuery<RelatedRecipePreview[], Error>({
@@ -105,6 +145,32 @@ export default function RecipeDetailPage({ params }: { params: { recipeId: strin
     },
   });
 
+  // Re-added toggleFavoriteMutation
+  const toggleFavoriteMutation = useMutation({
+    mutationFn: toggleFavoriteRecipe,
+    onMutate: async ({ favorited }) => {
+      const previousIsFavorited = isFavorited;
+      const previousFavoriteCount = favoriteCount;
+      setIsFavorited(favorited);
+      setFavoriteCount(prev => favorited ? prev + 1 : Math.max(0, prev - 1));
+      return { previousIsFavorited, previousFavoriteCount };
+    },
+    onError: (err, variables, context) => {
+      if (context) {
+        setIsFavorited(context.previousIsFavorited);
+        setFavoriteCount(context.previousFavoriteCount);
+      }
+      console.error("Failed to toggle favorite:", err);
+      alert("收藏操作失败，请稍后再试。"); // User-facing error
+    },
+    onSuccess: (data) => {
+      setIsFavorited(data.favorited);
+      setFavoriteCount(data.favoritesCount);
+      // queryClient.invalidateQueries({ queryKey: ['recipeDetails', recipeId] }); // Could be redundant
+      // queryClient.invalidateQueries({ queryKey: ['userFavorites'] }); // If a global list exists
+    },
+  });
+
   const handleCommentSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!session?.user) {
@@ -115,35 +181,85 @@ export default function RecipeDetailPage({ params }: { params: { recipeId: strin
       setCommentError("评论内容不能为空。");
       return;
     }
-    setCommentError(null); // Clear previous errors
+    setCommentError(null);
     commentMutation.mutate({ recipeId, content: commentText });
   };
 
-  if (isLoading) {
-    return <RecipeDetailSkeleton />; // Show skeleton while loading
+  const handleToggleFavorite = () => {
+    if (!session?.user) {
+      alert("请先登录才能收藏食谱！");
+      return;
+    }
+    toggleFavoriteMutation.mutate({ recipeId, favorited: !isFavorited });
+  };
+
+  const handleAddToMealPlan = () => {
+    if (!session?.user) {
+      alert("请先登录才能将食谱添加到周计划！");
+      return;
+    }
+    // Placeholder logic
+    // Later, this will open a dialog: setIsAddToMealPlanDialogOpen(true);
+    alert(`食谱 "${recipe?.title}" (ID: ${recipeId}) 将被添加到周计划。此功能待实现。`);
+    console.log("Add to Meal Plan clicked for recipe:", recipeId, recipe?.title);
+  };
+
+  // Re-added ingredientsForUI processing logic
+  const ingredientsForUI: IngredientUIData[] = [];
+  if (recipe && Array.isArray(recipe.ingredients)) {
+    recipe.ingredients.forEach((item: any) => {
+      // Ensure item is an object and has name and quantity
+      if (item && typeof item === 'object' && item.name != null && item.quantity != null) {
+        ingredientsForUI.push({
+          name: String(item.name),
+          quantity: String(item.quantity),
+          unit: item.unit ? String(item.unit) : undefined,
+          category: item.category ? String(item.category) : undefined,
+        });
+      } else {
+        console.warn("Skipping malformed ingredient item:", item);
+      }
+    });
+  } else if (recipe && !recipe.ingredients) {
+    console.warn("Recipe data does not contain ingredients array:", recipe);
   }
 
-  if (isError) {
+  if (isLoading) {
+    return <RecipeDetailSkeleton />;
+  }
+
+  if (isError || !recipe) {
     return (
       <div className="container py-8 text-center text-destructive">
-        <p>加载食谱失败: {queryError?.message || '未知错误'}</p>
+        <p>加载食谱失败: {queryError?.message || (!recipe ? '未找到食谱数据' : '未知错误')}</p>
       </div>
     );
   }
 
-  if (!recipe) {
-    // This case might be handled by the error state if API returns 404
-    return (
-      <div className="container py-8 text-center text-muted-foreground">
-        <p>未找到该食谱。</p>
-      </div>
-    );
-  }
-
-  // --- Render actual recipe data ---
   const fallbackImage = "/placeholder.svg";
   const displayRating = recipe.averageRating && recipe.averageRating > 0 ? recipe.averageRating.toFixed(1) : "-";
   const ratingCount = recipe._count?.ratings ?? 0;
+
+  const actionButtons = (
+    <div className="flex flex-wrap gap-2 mb-6">
+      <Button variant="outline" size="sm" className="flex items-center" onClick={handleToggleFavorite} disabled={toggleFavoriteMutation.isPending}>
+        {toggleFavoriteMutation.isPending ? (
+          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+        ) : (
+          <Heart className={`mr-2 h-4 w-4 ${isFavorited ? "fill-red-500 text-red-500" : ""}`} />
+        )}
+        {isFavorited ? "已收藏" : "收藏"} ({favoriteCount})
+      </Button>
+      <Button variant="outline" size="sm" className="flex items-center" onClick={handleAddToMealPlan}>
+        <Plus className="mr-2 h-4 w-4" />
+        添加到周计划
+      </Button>
+      <Button variant="outline" size="sm" className="flex items-center" onClick={() => setIsShareDialogOpen(true)}>
+        <LinkIcon className="mr-2 h-4 w-4" />
+        分享
+      </Button>
+    </div>
+  );
 
   return (
     <div className="container py-8">
@@ -155,7 +271,6 @@ export default function RecipeDetailPage({ params }: { params: { recipeId: strin
             <div className="flex flex-wrap items-center gap-x-4 gap-y-2 mb-4">
               <div className="flex items-center">
                 <div className="flex">
-                  {/* Render stars based on averageRating */}
                   {[1, 2, 3, 4, 5].map((star) => (
                     <Star
                       key={star}
@@ -176,6 +291,8 @@ export default function RecipeDetailPage({ params }: { params: { recipeId: strin
               </div>
             </div>
 
+            {actionButtons}
+
             {/* Recipe Image */}
             <div className="relative aspect-video rounded-lg overflow-hidden bg-muted">
               <Image
@@ -183,7 +300,7 @@ export default function RecipeDetailPage({ params }: { params: { recipeId: strin
                 alt={recipe.title}
                 fill
                 className="object-cover"
-                priority // Prioritize loading this image
+                priority
                 onError={(e) => { (e.target as HTMLImageElement).src = fallbackImage; }}
               />
             </div>
@@ -208,20 +325,6 @@ export default function RecipeDetailPage({ params }: { params: { recipeId: strin
             </div>
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex flex-wrap gap-4">
-            {/* TODO: Implement Favorite/Add to Plan functionality */}
-            <Button className="flex items-center gap-2">
-              <Heart className="h-4 w-4" />
-              收藏 ({recipe._count?.favorites ?? 0})
-            </Button>
-            <Button variant="outline" className="flex items-center gap-2">
-              <Plus className="h-4 w-4" />
-              添加到周计划
-            </Button>
-            <ShareDialog recipeId={recipe.id} recipeTitle={recipe.title} />
-          </div>
-
           {/* Recipe Content Tabs */}
           <Tabs defaultValue="ingredients">
             <TabsList className="grid w-full grid-cols-3">
@@ -232,20 +335,11 @@ export default function RecipeDetailPage({ params }: { params: { recipeId: strin
 
             {/* Ingredients Tab */}
             <TabsContent value="ingredients" className="pt-4">
-              <div className="space-y-4">
-                <ul className="space-y-2">
-                  {recipe.ingredients && recipe.ingredients.length > 0 ? (
-                    recipe.ingredients.map((ing, index) => (
-                      <li key={index} className="flex items-center justify-between p-2 border-b">
-                        <span>{ing.name}</span>
-                        <span className="text-muted-foreground">{ing.quantity}</span>
-                      </li>
-                    ))
-                  ) : (
-                    <p className="text-muted-foreground text-center py-4">暂无食材信息</p>
-                  )}
-                </ul>
-              </div>
+              {ingredientsForUI.length > 0 ? (
+                <IngredientList ingredients={ingredientsForUI} />
+              ) : (
+                <p className="text-muted-foreground text-center py-4">暂无食材信息</p>
+              )}
             </TabsContent>
 
             {/* Instructions Tab */}
@@ -389,6 +483,13 @@ export default function RecipeDetailPage({ params }: { params: { recipeId: strin
           {/* You can add more sidebar content here if needed */}
         </div>
       </div>
+
+      <ShareDialog
+        open={isShareDialogOpen}
+        onOpenChange={setIsShareDialogOpen}
+        recipeId={recipe.id}
+        recipeTitle={recipe.title}
+      />
     </div>
   );
 }

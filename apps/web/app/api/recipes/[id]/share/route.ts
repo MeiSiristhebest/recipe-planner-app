@@ -1,33 +1,8 @@
 import { NextResponse } from "next/server";
 import { prisma } from "@/lib/prisma";
 import { auth } from "@/lib/auth";
-import { createClient } from "@supabase/supabase-js";
 
-// 初始化Supabase客户端
-const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
-
-if (!supabaseUrl || !supabaseKey) {
-  throw new Error("Supabase URL or Service Role Key is not defined in environment variables.");
-}
-
-// 创建Supabase客户端，添加重试和超时配置
-const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-  },
-  global: {
-    // 减少超时时间，避免长时间等待
-    fetch: (url, options) => {
-      return fetch(url, {
-        ...options,
-        // 设置较短的超时时间
-        signal: AbortSignal.timeout(10000), // 10秒超时
-      });
-    },
-  },
-});
+// Removed Supabase client initialization and related code
 
 export async function POST(
   request: Request,
@@ -41,67 +16,36 @@ export async function POST(
       return NextResponse.json({ error: "未授权" }, { status: 401 });
     }
 
-    // 获取食谱详情
+    // Optional: Check if recipe exists, though not strictly necessary for link generation
     const recipe = await prisma.recipe.findUnique({
       where: { id: recipeId },
-      include: {
-        author: {
-          select: {
-            id: true,
-            name: true,
-            image: true,
-          },
-        },
-        categories: {
-          include: {
-            category: true,
-          },
-        },
-        tags: {
-          include: {
-            tag: true,
-          },
-        },
-      },
+      select: { id: true }, // Select minimal data
     });
 
     if (!recipe) {
       return NextResponse.json({ error: "食谱不存在" }, { status: 404 });
     }
 
-    // 生成唯一的分享链接
-    const shareId = Math.random().toString(36).substring(2, 15);
+    // Generate a simple, predictable share ID (could be just the recipeId or a transformed version)
+    // For this simple version, we'll use the recipeId itself or a prefix
+    const shareId = `share-${recipeId}`;
 
-    // 将分享信息存储到Supabase
-    const { data, error } = await supabase.from("recipe_shares").insert([
-      {
-        share_id: shareId,
-        recipe_id: recipeId,
-        user_id: session.user.id,
-        recipe_data: {
-          ...recipe,
-          categories: recipe.categories.map((c) => c.category),
-          tags: recipe.tags.map((t) => t.tag),
-        },
-        created_at: new Date().toISOString(),
-      },
-    ]);
+    // Generate the share URL using an environment variable for the app URL or a fallback
+    const appUrl = process.env.NEXT_PUBLIC_APP_URL || "http://localhost:3000";
+    const shareUrl = `${appUrl}/shared/${shareId}`; // Assuming a route /shared/[shareId] exists
 
-    if (error) {
-      console.error("Supabase error:", error);
-      return NextResponse.json({ error: "创建分享链接失败" }, { status: 500 });
-    }
-
-    // 生成分享链接
-    const shareUrl = `${process.env.NEXT_PUBLIC_APP_URL || "https://recipe-planner-app.vercel.app"}/shared/${shareId}`;
+    // No database interaction for storing the share link in this simple version
+    console.log(`Generated share link for recipe ${recipeId}: ${shareUrl}`);
 
     return NextResponse.json({
-      shareId,
-      shareUrl,
+      shareId, // The generated ID, can be used by the client if needed
+      shareUrl, // The full URL to be shared
       success: true,
     });
+
   } catch (error) {
-    console.error("Error sharing recipe:", error);
-    return NextResponse.json({ error: "分享食谱失败" }, { status: 500 });
+    console.error("Error generating share link:", error);
+    // If prisma.recipe.findUnique fails or any other error occurs
+    return NextResponse.json({ error: "生成分享链接失败" }, { status: 500 });
   }
 }

@@ -3,6 +3,7 @@
 export interface Ingredient {
   name: string
   quantity: string
+  unit?: string
   category?: string
 }
 
@@ -36,7 +37,9 @@ export function IngredientList({
             )}
             <span>{ingredient.name}</span>
           </div>
-          <span className="text-muted-foreground">{ingredient.quantity}</span>
+          <span className="text-muted-foreground">
+            {ingredient.quantity}{ingredient.unit ? ` ${ingredient.unit}` : ''}
+          </span>
         </div>
       ))}
     </div>

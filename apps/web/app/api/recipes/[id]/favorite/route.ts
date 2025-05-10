@@ -41,7 +41,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         },
       })
 
-      return NextResponse.json({ favorited: false })
+      // Get updated favorites count
+      const updatedRecipe = await prisma.recipe.findUnique({
+        where: { id: recipeId },
+        select: { _count: { select: { favorites: true } } },
+      })
+      const favoritesCount = updatedRecipe?._count?.favorites ?? 0
+
+      return NextResponse.json({ favorited: false, favoritesCount })
     } else {
       // Add favorite
       await prisma.favorite.create({
@@ -55,7 +62,14 @@ export async function POST(request: NextRequest, { params }: { params: { id: str
         },
       })
 
-      return NextResponse.json({ favorited: true })
+      // Get updated favorites count
+      const updatedRecipe = await prisma.recipe.findUnique({
+        where: { id: recipeId },
+        select: { _count: { select: { favorites: true } } },
+      })
+      const favoritesCount = updatedRecipe?._count?.favorites ?? 0
+
+      return NextResponse.json({ favorited: true, favoritesCount })
     }
   } catch (error) {
     console.error("Error toggling favorite:", error)

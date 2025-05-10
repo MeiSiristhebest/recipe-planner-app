@@ -16,42 +16,79 @@ export interface NutritionInfo {
 }
 
 interface NutritionDisplayProps {
-  nutritionInfo: NutritionInfo
+  nutritionInfo: Partial<NutritionInfo>
   servings?: number
   showPerServing?: boolean
   className?: string
 }
 
 export function NutritionDisplay({
-  nutritionInfo,
+  nutritionInfo: initialNutritionInfo,
   servings = 1,
   showPerServing = true,
   className = "",
 }: NutritionDisplayProps) {
   const [view, setView] = useState<"per-serving" | "total">("per-serving")
 
-  // 计算宏量素百分比
-  const totalMacros = nutritionInfo.protein + nutritionInfo.fat + nutritionInfo.carbs
-  const proteinPercentage = totalMacros > 0 ? (nutritionInfo.protein / totalMacros) * 100 : 0
-  const fatPercentage = totalMacros > 0 ? (nutritionInfo.fat / totalMacros) * 100 : 0
-  const carbsPercentage = totalMacros > 0 ? (nutritionInfo.carbs / totalMacros) * 100 : 0
+  // Sanitize nutritionInfo to ensure all fields are numbers
+  const sanitizeField = (value: any, fieldName: string): number => {
+    const num = Number(value)
+    if (isNaN(num)) {
+      console.warn(
+        `NutritionDisplay: Field '${fieldName}' received non-numeric value '${value}', defaulting to 0.`
+      )
+      return 0
+    }
+    return num
+  }
 
-  // 计算总营养成分（如果当前显示的是每份）
-  const totalNutrition =
-    view === "per-serving" && servings > 1
-      ? {
-          calories: nutritionInfo.calories * servings,
-          protein: nutritionInfo.protein * servings,
-          fat: nutritionInfo.fat * servings,
-          carbs: nutritionInfo.carbs * servings,
-          fiber: nutritionInfo.fiber * servings,
-          sugar: nutritionInfo.sugar * servings,
-          sodium: nutritionInfo.sodium * servings,
-        }
-      : nutritionInfo
+  const nutritionInfo: NutritionInfo = {
+    calories: sanitizeField(initialNutritionInfo.calories, "calories"),
+    protein: sanitizeField(initialNutritionInfo.protein, "protein"),
+    fat: sanitizeField(initialNutritionInfo.fat, "fat"),
+    carbs: sanitizeField(initialNutritionInfo.carbs, "carbs"),
+    fiber: sanitizeField(initialNutritionInfo.fiber, "fiber"),
+    sugar: sanitizeField(initialNutritionInfo.sugar, "sugar"),
+    sodium: sanitizeField(initialNutritionInfo.sodium, "sodium"),
+  }
+
+  // 使用每份数据进行宏量素供能比计算
+  const baseNutritionForPercentage = nutritionInfo
+  const proteinCalories = baseNutritionForPercentage.protein * 4
+  const fatCalories = baseNutritionForPercentage.fat * 9
+  const carbsCalories = baseNutritionForPercentage.carbs * 4
+  const totalCalculatedCalories = proteinCalories + fatCalories + carbsCalories
+
+  // 优先使用传入的 calories 字段作为总热量基准，如果calories为0或不合理，则百分比可能不准确或为0
+  const denominatorCalories = baseNutritionForPercentage.calories > 0 ? baseNutritionForPercentage.calories : totalCalculatedCalories
+
+  const proteinPercentage =
+    denominatorCalories > 0
+      ? (proteinCalories / denominatorCalories) * 100
+      : 0
+  const fatPercentage =
+    denominatorCalories > 0 ? (fatCalories / denominatorCalories) * 100 : 0
+  const carbsPercentage =
+    denominatorCalories > 0
+      ? (carbsCalories / denominatorCalories) * 100
+      : 0
+
+  // 始终基于传入的 nutritionInfo (每份) 和 servings 计算总营养成分
+  const calculatedTotalNutrition = servings > 1 ? {
+    calories: nutritionInfo.calories * servings,
+    protein: nutritionInfo.protein * servings,
+    fat: nutritionInfo.fat * servings,
+    carbs: nutritionInfo.carbs * servings,
+    fiber: nutritionInfo.fiber * servings,
+    sugar: nutritionInfo.sugar * servings,
+    sodium: nutritionInfo.sodium * servings,
+  } : { ...nutritionInfo }
 
   // 当前显示的营养信息
-  const displayedNutrition = view === "total" && servings > 1 ? totalNutrition : nutritionInfo
+  const displayedNutrition =
+    view === "total" && servings > 1
+      ? calculatedTotalNutrition
+      : nutritionInfo
 
   return (
     <Card className={className}>
