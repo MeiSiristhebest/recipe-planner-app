@@ -36,9 +36,9 @@ export const supabaseConfig = {
   // 是否使用本地存储替代Supabase
   useLocalStorage: true,
   // Supabase URL
-  url: 'https://desoaoudgnhrhdpsqcbu.supabase.co',
+  url: process.env.NEXT_PUBLIC_SUPABASE_URL || 'https://mwoyqhatxasvzkmkmvgs.supabase.co',
   // Supabase Key
-  key: '1e543fe4e8ffdd81c53a42edca7a15cd048839b5a228c97a05b63ef0fe736ab2',
+  key: process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY || 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im13b3lxaGF0eGFzdnprbWttdmdzIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NDY3MTgzMDUsImV4cCI6MjA2MjI5NDMwNX0.2_K2jXPvSNglplgcjLzKf_jG0N_mmav5QRHudmMoXfk',
   // 备用服务器
   fallbackUrl: 'https://your-fallback-server.com',
 };

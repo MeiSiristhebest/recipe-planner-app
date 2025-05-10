@@ -1,24 +1,36 @@
 'use client'; // Mark as client component for data fetching hooks
 
-import { useQuery } from '@tanstack/react-query';
+import { useState } from 'react'; // Added useState
+import { useSession } from 'next-auth/react'; // Added useSession
+import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'; // Added useMutation and useQueryClient
 import { useParams } from 'next/navigation'; // Use if needed, but params are passed as props in App Router
 import Image from "next/image"
 import { Button } from "@repo/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs"
 import { Textarea } from "@repo/ui/textarea"
 import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/avatar"
-import { Clock, ChefHat, Users, Heart, Plus, Star, Loader2 } from "lucide-react"
+import { Clock, ChefHat, Users, Heart, Plus, Star, Loader2, Send } from "lucide-react"
 import { ShareDialog } from "@/components/features/recipes/share-dialog"
 import { NutritionDisplay } from "@/components/features/nutrition/nutrition-display"
 import { type Recipe, type Comment, type User } from "@recipe-planner/types"; // Assuming Comment type is available
 import { Skeleton } from "@repo/ui/skeleton"
 import { format } from 'date-fns'
 import { zhCN } from 'date-fns/locale'
+import Link from 'next/link'; // Added Link for navigation
 
 // Type for combined recipe and comments data
 interface RecipeDetailData extends Recipe {
   comments: (Comment & { user: User })[]; // Expect comments with user data
   // Add other expected relations like author, categories, tags if needed
+}
+
+// Type for related recipe preview
+interface RelatedRecipePreview {
+  id: string;
+  title: string;
+  coverImage: string | null;
+  cookingTime: number;
+  difficulty: string;
 }
 
 // API function to fetch recipe details
@@ -31,14 +43,81 @@ async function fetchRecipeDetails(recipeId: string): Promise<RecipeDetailData> {
   return response.json();
 }
 
+// API function to post a comment
+async function postComment({ recipeId, content }: { recipeId: string; content: string }): Promise<Comment & { user: User }> {
+  const response = await fetch(`/api/recipes/${recipeId}/comments`, {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify({ content }),
+  });
+  if (!response.ok) {
+    const errorData = await response.json().catch(() => ({})); // Try to parse error, default to empty object
+    throw new Error(errorData.error || 'Failed to post comment');
+  }
+  return response.json();
+}
+
+// API function to fetch related recipes
+async function fetchRelatedRecipes(recipeId: string, limit: number = 3): Promise<RelatedRecipePreview[]> {
+  const response = await fetch(`/api/recipes/${recipeId}/related?limit=${limit}`);
+  if (!response.ok) {
+    throw new Error('Failed to fetch related recipes');
+  }
+  return response.json();
+}
+
 export default function RecipeDetailPage({ params }: { params: { recipeId: string } }) {
   const { recipeId } = params;
+  const { data: session } = useSession(); // Get session
+  const queryClient = useQueryClient(); // For invalidating queries
 
-  const { data: recipe, isLoading, error, isError } = useQuery<RecipeDetailData, Error>({
+  const [commentText, setCommentText] = useState('');
+  const [commentError, setCommentError] = useState<string | null>(null);
+
+  const { data: recipe, isLoading, error: queryError, isError } = useQuery<RecipeDetailData, Error>({
     queryKey: ['recipeDetails', recipeId],
     queryFn: () => fetchRecipeDetails(recipeId),
     enabled: !!recipeId, // Only run query if recipeId is available
   });
+
+  // Query for related recipes
+  const { data: relatedRecipes, isLoading: isLoadingRelated } = useQuery<RelatedRecipePreview[], Error>({
+    queryKey: ['relatedRecipes', recipeId],
+    queryFn: () => fetchRelatedRecipes(recipeId, 3), // Fetch 3 related recipes
+    enabled: !!recipeId && !!recipe, // Only run query if recipeId and main recipe data are available
+  });
+
+  const commentMutation = useMutation({
+    mutationFn: postComment,
+    onSuccess: (newComment) => {
+      setCommentText('');
+      setCommentError(null);
+      // Invalidate and refetch recipe details to update comments list
+      queryClient.invalidateQueries({ queryKey: ['recipeDetails', recipeId] });
+      // Here we can trigger a "special effect" later
+      console.log("Comment posted successfully!", newComment);
+    },
+    onError: (error: Error) => {
+      setCommentError(error.message || "发表评论失败，请稍后再试。");
+      console.error("Comment posting error:", error);
+    },
+  });
+
+  const handleCommentSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!session?.user) {
+      setCommentError("请先登录再发表评论。");
+      return;
+    }
+    if (!commentText.trim()) {
+      setCommentError("评论内容不能为空。");
+      return;
+    }
+    setCommentError(null); // Clear previous errors
+    commentMutation.mutate({ recipeId, content: commentText });
+  };
 
   if (isLoading) {
     return <RecipeDetailSkeleton />; // Show skeleton while loading
@@ -47,7 +126,7 @@ export default function RecipeDetailPage({ params }: { params: { recipeId: strin
   if (isError) {
     return (
       <div className="container py-8 text-center text-destructive">
-        <p>加载食谱失败: {error?.message || '未知错误'}</p>
+        <p>加载食谱失败: {queryError?.message || '未知错误'}</p>
       </div>
     );
   }
@@ -203,16 +282,40 @@ export default function RecipeDetailPage({ params }: { params: { recipeId: strin
           </Tabs>
 
           {/* Comments Section */}
-          <div className="space-y-6">
-            <h3 className="text-xl font-bold">评论 ({recipe.comments?.length ?? 0})</h3>
+          <div className="space-y-6 pt-8 mt-8 border-t">
+            <h3 className="text-xl font-semibold">评论 ({recipe?.comments?.length ?? 0})</h3>
             <div className="space-y-4">
-              {/* Comment Form (TODO: Implement posting logic) */}
-              <div className="space-y-2">
-                <Textarea placeholder="分享你的烹饪体验..." />
-                <div className="flex justify-end">
-                  <Button>发表评论</Button>
+              {session?.user ? (
+                <form onSubmit={handleCommentSubmit} className="space-y-2">
+                  <Textarea
+                    placeholder="分享你的烹饪体验..."
+                    value={commentText}
+                    onChange={(e) => setCommentText(e.target.value)}
+                    disabled={commentMutation.isPending}
+                    rows={3}
+                  />
+                  {commentError && <p className="text-sm text-destructive">{commentError}</p>}
+                  <div className="flex justify-end">
+                    <Button type="submit" disabled={commentMutation.isPending || !commentText.trim()}>
+                      {commentMutation.isPending ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          发表中...
+                        </>
+                      ) : (
+                        <>
+                          <Send className="mr-2 h-4 w-4" />
+                          发表评论
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                </form>
+              ) : (
+                <div className="text-center p-4 border rounded-md bg-muted/50">
+                  <p className="text-muted-foreground">请 <a href="/login" className="text-primary hover:underline">登录</a> 后发表评论。</p>
                 </div>
-              </div>
+              )}
 
               {/* Comments List */}
               <div className="space-y-4">
@@ -242,23 +345,48 @@ export default function RecipeDetailPage({ params }: { params: { recipeId: strin
           </div>
         </div>
 
-        {/* Sidebar (TODO: Fetch and display related recipes) */}
+        {/* Sidebar */}
         <div className="lg:col-span-1 space-y-8">
-          <div className="p-4 border rounded-lg">
-            <h3 className="text-lg font-medium mb-4">相关食谱</h3>
+          <div className="p-4 border rounded-lg bg-card shadow">
+            <h3 className="text-lg font-semibold mb-4">相关食谱</h3>
             <div className="space-y-4">
-              {/* Placeholder for related recipes */}
-              {[1, 2, 3].map((_, i) => (
-                <div key={i} className="flex gap-3">
-                  <Skeleton className="w-20 h-20 rounded-md flex-shrink-0 bg-muted" />
-                  <div className="space-y-1 flex-grow">
-                    <Skeleton className="h-4 w-3/4 bg-muted" />
-                    <Skeleton className="h-3 w-1/2 bg-muted" />
+              {isLoadingRelated ? (
+                [1, 2, 3].map((_, i) => (
+                  <div key={i} className="flex gap-3">
+                    <Skeleton className="w-20 h-20 rounded-md flex-shrink-0 bg-muted" />
+                    <div className="space-y-1 flex-grow py-1">
+                      <Skeleton className="h-4 w-3/4 bg-muted" />
+                      <Skeleton className="h-3 w-1/2 bg-muted mt-1" />
+                      <Skeleton className="h-3 w-1/3 bg-muted mt-1" />
+                    </div>
                   </div>
-                </div>
-              ))}
+                ))
+              ) : relatedRecipes && relatedRecipes.length > 0 ? (
+                relatedRecipes.map((relatedRecipe) => (
+                  <Link key={relatedRecipe.id} href={`/recipes/${relatedRecipe.id}`} className="block hover:bg-muted/50 p-2 rounded-md transition-colors -m-2">
+                    <div className="flex gap-3 items-center">
+                      <div className="relative w-20 h-20 rounded-md overflow-hidden flex-shrink-0">
+                        <Image
+                          src={relatedRecipe.coverImage || fallbackImage}
+                          alt={relatedRecipe.title}
+                          fill
+                          className="object-cover"
+                          onError={(e) => { (e.target as HTMLImageElement).src = fallbackImage; }}
+                        />
+                      </div>
+                      <div className="space-y-1">
+                        <h4 className="text-sm font-medium leading-tight line-clamp-2">{relatedRecipe.title}</h4>
+                        <p className="text-xs text-muted-foreground">{relatedRecipe.cookingTime}分钟 · {relatedRecipe.difficulty}</p>
+                      </div>
+                    </div>
+                  </Link>
+                ))
+              ) : (
+                <p className="text-sm text-muted-foreground text-center py-4">暂无相关食谱推荐</p>
+              )}
             </div>
           </div>
+          {/* You can add more sidebar content here if needed */}
         </div>
       </div>
     </div>

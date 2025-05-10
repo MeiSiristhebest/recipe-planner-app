@@ -20,10 +20,14 @@ export async function createSupabaseStorageSignedUrl(
   })
 
   // 构建签名URL
-  const endpoint = "https://desoaoudgnhrhdpsqcbu.supabase.co/storage/v1/s3"
-  const url = new URL(`${endpoint}/object/sign/${bucket}/${path}`)
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  if (!supabaseUrl) {
+    throw new Error("NEXT_PUBLIC_SUPABASE_URL is not defined in environment variables.");
+  }
+  const endpoint = `${supabaseUrl}/storage/v1/s3`;
+  const url = new URL(`${endpoint}/object/sign/${bucket}/${path}`);
 
-  url.searchParams.append("token", signature)
+  url.searchParams.append("token", signature);
 
   return url.toString()
 }

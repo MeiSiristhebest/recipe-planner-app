@@ -1,5 +1,6 @@
 import type React from "react"
 import { ThemeProvider } from "@/components/theme-provider"
+import { AuthProvider } from "@/components/providers/auth-provider"
 import { Header } from "@/components/shared/header"
 import { Footer } from "@/components/shared/footer"
 import "./globals.css"
@@ -25,6 +26,7 @@ export default function RootLayout({
     <html lang="zh-CN" suppressHydrationWarning>
       <body className="min-h-screen flex flex-col">
         <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
+          <AuthProvider>
           <QueryProvider>
             <Header />
             <main className="flex-grow">{children}</main>
@@ -32,6 +34,7 @@ export default function RootLayout({
             <Toaster richColors position="top-right" />
             <NavigationEvents />
           </QueryProvider>
+          </AuthProvider>
         </ThemeProvider>
       </body>
     </html>

@@ -78,7 +78,7 @@ export function NutritionDisplay({
           <div>
             <div className="flex justify-between items-center mb-1">
               <span className="font-medium">热量</span>
-              <span className="text-lg font-bold">{displayedNutrition.calories.toFixed(1)} kcal</span>
+              <span className="text-lg font-bold">{(displayedNutrition.calories ?? 0).toFixed(1)} kcal</span>
             </div>
           </div>
 
@@ -117,44 +117,44 @@ export function NutritionDisplay({
               <div>
                 <div className="flex justify-between mb-1">
                   <span>蛋白质</span>
-                  <span className="font-medium">{displayedNutrition.protein.toFixed(1)}g</span>
+                  <span className="font-medium">{(displayedNutrition.protein ?? 0).toFixed(1)}g</span>
                 </div>
-                <Progress value={Math.min((displayedNutrition.protein / 50) * 100, 100)} className="h-1.5" />
+                <Progress value={Math.min(((displayedNutrition.protein ?? 0) / 50) * 100, 100)} className="h-1.5" />
               </div>
               <div>
                 <div className="flex justify-between mb-1">
                   <span>脂肪</span>
-                  <span className="font-medium">{displayedNutrition.fat.toFixed(1)}g</span>
+                  <span className="font-medium">{(displayedNutrition.fat ?? 0).toFixed(1)}g</span>
                 </div>
-                <Progress value={Math.min((displayedNutrition.fat / 65) * 100, 100)} className="h-1.5" />
+                <Progress value={Math.min(((displayedNutrition.fat ?? 0) / 65) * 100, 100)} className="h-1.5" />
               </div>
               <div>
                 <div className="flex justify-between mb-1">
                   <span>碳水化合物</span>
-                  <span className="font-medium">{displayedNutrition.carbs.toFixed(1)}g</span>
+                  <span className="font-medium">{(displayedNutrition.carbs ?? 0).toFixed(1)}g</span>
                 </div>
-                <Progress value={Math.min((displayedNutrition.carbs / 300) * 100, 100)} className="h-1.5" />
+                <Progress value={Math.min(((displayedNutrition.carbs ?? 0) / 300) * 100, 100)} className="h-1.5" />
               </div>
               <div>
                 <div className="flex justify-between mb-1">
                   <span>膳食纤维</span>
-                  <span className="font-medium">{displayedNutrition.fiber.toFixed(1)}g</span>
+                  <span className="font-medium">{(displayedNutrition.fiber ?? 0).toFixed(1)}g</span>
                 </div>
-                <Progress value={Math.min((displayedNutrition.fiber / 25) * 100, 100)} className="h-1.5" />
+                <Progress value={Math.min(((displayedNutrition.fiber ?? 0) / 25) * 100, 100)} className="h-1.5" />
               </div>
               <div>
                 <div className="flex justify-between mb-1">
                   <span>糖</span>
-                  <span className="font-medium">{displayedNutrition.sugar.toFixed(1)}g</span>
+                  <span className="font-medium">{(displayedNutrition.sugar ?? 0).toFixed(1)}g</span>
                 </div>
-                <Progress value={Math.min((displayedNutrition.sugar / 50) * 100, 100)} className="h-1.5" />
+                <Progress value={Math.min(((displayedNutrition.sugar ?? 0) / 50) * 100, 100)} className="h-1.5" />
               </div>
               <div>
                 <div className="flex justify-between mb-1">
                   <span>钠</span>
-                  <span className="font-medium">{displayedNutrition.sodium.toFixed(1)}mg</span>
+                  <span className="font-medium">{(displayedNutrition.sodium ?? 0).toFixed(1)}mg</span>
                 </div>
-                <Progress value={Math.min((displayedNutrition.sodium / 2300) * 100, 100)} className="h-1.5" />
+                <Progress value={Math.min(((displayedNutrition.sodium ?? 0) / 2300) * 100, 100)} className="h-1.5" />
               </div>
             </div>
           </div>

@@ -66,21 +66,14 @@ export async function GET(request: NextRequest) {
         orderBy = { createdAt: "desc" }
         break
       case "popular":
-        // TEMPORARY FIX: Fallback to newest until _count sort is verified/fixed
-        orderBy = { createdAt: "desc" } 
-        // orderBy = { favorites: { _count: "desc" } } // Potentially problematic
-        break
-      case "rating":
-        // TEMPORARY FIX: Fallback to newest
-        orderBy = { createdAt: "desc" } 
-        // orderBy = { favorites: { _count: "desc" } } // Potentially problematic
+        orderBy = { favorites: { _count: "desc" } }
         break
       default:
         orderBy = { createdAt: "desc" }
     }
 
     // Get recipes
-    const recipes = await prisma.recipe.findMany({
+    const recipesWithRawData = await prisma.recipe.findMany({
       where,
       orderBy,
       skip,
@@ -113,23 +106,41 @@ export async function GET(request: NextRequest) {
             },
           },
         },
+        ratings: {
+          select: {
+            value: true,
+          },
+        },
         _count: {
           select: {
             favorites: true,
-            ratings: true,
             comments: true,
           },
         },
       },
     })
 
-    // Transform data for frontend (map categories/tags and add placeholder avgRating)
-    const processedRecipes = recipes.map(recipe => ({
+    // Transform data for frontend and calculate averageRating
+    let processedRecipes = recipesWithRawData.map(recipe => {
+      const totalRatingValue = recipe.ratings.reduce((sum, r) => sum + r.value, 0)
+      const averageRating = recipe.ratings.length > 0 ? totalRatingValue / recipe.ratings.length : null
+      
+      return {
           ...recipe,
-      averageRating: null,
+        averageRating: averageRating,
       categories: recipe.categories.map(c => c.category),
       tags: recipe.tags.map(t => t.tag),
-    }));
+      }
+    })
+
+    // Handle sorting by rating at the application level for the current page
+    if (sort === "rating") {
+      processedRecipes.sort((a, b) => {
+        const ratingA = a.averageRating === null ? -1 : a.averageRating
+        const ratingB = b.averageRating === null ? -1 : b.averageRating
+        return ratingB - ratingA
+      })
+    }
 
     // Get total count for pagination
     const totalRecipes = await prisma.recipe.count({ where })

@@ -84,3 +84,6 @@ local.settings.json
 *.pid
 *.seed
 *.pid.lock
+.turbo
+apps/web/.next
+apps/web/node_modules

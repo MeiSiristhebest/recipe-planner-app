@@ -4,8 +4,16 @@ import { v4 as uuidv4 } from "uuid"
 import { createClient } from "@supabase/supabase-js"
 
 // 初始化Supabase客户端
-const supabaseUrl = "https://desoaoudgnhrhdpsqcbu.supabase.co"
-const supabaseKey = "1e543fe4e8ffdd81c53a42edca7a15cd048839b5a228c97a05b63ef0fe736ab2"
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  // 在服务器端，可以抛出错误或记录日志
+  console.error("Supabase URL or Service Role Key is not defined in environment variables.");
+  // 根据您的错误处理策略，您可能希望在此处返回一个错误响应
+  // return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
+  throw new Error("Supabase URL or Service Role Key is not defined.")
+}
 const supabase = createClient(supabaseUrl, supabaseKey)
 
 export async function POST(request: Request) {

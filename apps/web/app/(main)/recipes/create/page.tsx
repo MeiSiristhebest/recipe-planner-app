@@ -12,12 +12,17 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@repo/ui/card"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs"
 import { Alert, AlertDescription } from "@repo/ui/alert"
-import { AlertCircle, Plus, Trash2, ChevronUp, ChevronDown, PlusIcon } from "lucide-react"
+import { AlertCircle, Plus, Trash2, ChevronUp, ChevronDown, PlusIcon, Loader2 } from "lucide-react"
 import { createRecipe } from "@/app/api/recipes/actions"
 import { ImageUpload } from "@/components/features/recipes/image-upload"
 import Image from "next/image"
 import { NutritionCalculator } from "@/components/features/nutrition/nutrition-calculator"
 import type { NutritionInfo } from "@/components/features/nutrition/nutrition-display"
+
+// 扩展导入的NutritionInfo类型，添加索引签名
+type ExtendedNutritionInfo = NutritionInfo & {
+  [key: string]: number
+}
 
 type Ingredient = {
   name: string
@@ -37,6 +42,10 @@ export default function CreateRecipePage() {
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("basic")
 
+  const [aiPrompt, setAiPrompt] = useState("");
+  const [isAiLoading, setIsAiLoading] = useState(false);
+  const [aiError, setAiError] = useState<string | null>(null);
+
   const [formData, setFormData] = useState({
     title: "",
     description: "",
@@ -45,7 +54,7 @@ export default function CreateRecipePage() {
     difficulty: "中等",
     ingredients: [] as Ingredient[],
     instructions: [] as Instruction[],
-    nutritionInfo: {} as NutritionInfo,
+    nutritionInfo: {} as ExtendedNutritionInfo,
     categoryIds: [] as string[],
     tagIds: [] as string[],
   })
@@ -158,6 +167,11 @@ export default function CreateRecipePage() {
     })
   }
 
+  /**
+   * 向上或向下移动列表中的指令步骤。
+   * @param index - 要移动的指令的当前索引。
+   * @param direction - 移动指令的方向（“up”或“down”）。
+   */
   const moveInstruction = (index: number, direction: "up" | "down") => {
     if ((direction === "up" && index === 0) || (direction === "down" && index === formData.instructions.length - 1)) {
       return
@@ -166,9 +180,11 @@ export default function CreateRecipePage() {
     setFormData((prev) => {
       const newInstructions = [...prev.instructions]
       const newIndex = direction === "up" ? index - 1 : index + 1
-      const temp = newInstructions[index]
-      newInstructions[index] = newInstructions[newIndex]
-      newInstructions[newIndex] = temp
+      // 假设 newInstructions[index] 和 newInstructions[newIndex] 由前面的边界检查保证已定义，
+      // 如果启用了 noUncheckedIndexedAccess，则使用非空断言。
+      const temp = newInstructions[index]!;
+      newInstructions[index] = newInstructions[newIndex]!;
+      newInstructions[newIndex] = temp; // temp 现在是 Instruction 类型
 
       // Renumber steps
       return {
@@ -197,7 +213,9 @@ export default function CreateRecipePage() {
   const removeNutrition = (name: string) => {
     setFormData((prev) => {
       const newNutritionInfo = { ...prev.nutritionInfo }
-      delete newNutritionInfo[name]
+      if (newNutritionInfo && name in newNutritionInfo) {
+        delete newNutritionInfo[name]
+      }
       return { ...prev, nutritionInfo: newNutritionInfo }
     })
   }
@@ -256,6 +274,69 @@ export default function CreateRecipePage() {
     setNewInstruction((prev) => ({ ...prev, imageUrl: undefined }))
   }
 
+  /**
+   * 处理AI菜谱生成请求，并使用返回的数据填充表单。
+   */
+  const handleAiGenerateRecipe = async () => {
+    if (!aiPrompt.trim()) {
+      setAiError("请输入有效的AI提示词。");
+      return;
+    }
+    setIsAiLoading(true);
+    setAiError(null);
+
+    try {
+      const response = await fetch('/api/ai/generate-recipe-for-form', { // 注意：此API端点后续需要创建
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompt: aiPrompt }),
+      });
+
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || `AI菜谱生成API请求失败，状态码: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data.recipe) {
+        // 使用AI生成的数据填充表单
+        setFormData(prev => ({
+          ...prev,
+          title: data.recipe.title || prev.title,
+          description: data.recipe.description || prev.description,
+          cookingTime: data.recipe.cookingTime || prev.cookingTime,
+          servings: data.recipe.servings || prev.servings,
+          difficulty: data.recipe.difficulty || prev.difficulty,
+          ingredients: data.recipe.ingredients || prev.ingredients,
+          instructions: data.recipe.instructions?.map((instruction: Instruction): Instruction => ({
+            step: instruction.step,
+            content: instruction.content,
+            imageUrl: instruction.imageUrl
+          })) || prev.instructions,
+          // nutritionInfo: data.recipe.nutritionInfo || prev.nutritionInfo, // 如果AI提供营养信息，则取消注释
+          // categoryIds: data.recipe.categoryIds || prev.categoryIds, // 如果AI提供分类信息，则取消注释
+          // tagIds: data.recipe.tagIds || prev.tagIds, // 如果AI提供标签信息，则取消注释
+        }));
+        if (data.recipe.coverImage) {
+          setCoverImage(data.recipe.coverImage); // 假设AI可以建议封面图片URL
+        }
+        // 提示用户AI填充完成，可以切换到基础信息标签页开始编辑
+        // toast.success("AI已成功填充菜谱信息！请检查并完善。"); // 需要引入 sonner 或类似库的 toast
+        setActiveTab("basic"); 
+      } else {
+        throw new Error('从AI API响应中未能解析结构化菜谱数据。');
+      }
+    } catch (err) {
+      if (err instanceof Error) {
+        setAiError(err.message);
+      } else {
+        setAiError('AI生成菜谱时发生未知错误。');
+      }
+      console.error('AI生成菜谱失败:', err);
+    }
+    setIsAiLoading(false);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
@@ -313,7 +394,10 @@ export default function CreateRecipePage() {
       }
 
       // Redirect to recipe page
-      router.push(`/recipes/${result.recipe.id}`)
+      // 确保 result.recipe 存在再进行跳转
+      if (result && "recipe" in result && result.recipe) {
+        router.push(`/recipes/${result.recipe.id}`)
+      }
     } catch (error) {
       console.error("Error creating recipe:", error)
       setError("创建食谱失败，请稍后再试")
@@ -345,6 +429,52 @@ export default function CreateRecipePage() {
           <AlertDescription>{error}</AlertDescription>
         </Alert>
       )}
+      
+      {/* AI辅助生成区域 */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>AI辅助生成</CardTitle>
+          <CardDescription>输入描述，让AI帮您生成菜谱基础信息</CardDescription>
+        </CardHeader>
+        <CardContent className="space-y-4">
+          <div className="space-y-2">
+            <Label htmlFor="aiPrompt">描述您想要的菜谱</Label>
+            <Textarea
+              id="aiPrompt"
+              value={aiPrompt}
+              onChange={(e) => setAiPrompt(e.target.value)}
+              placeholder="例如：一道简单的西红柿炒鸡蛋，口感嫩滑，酸甜可口"
+              rows={3}
+              disabled={isAiLoading}
+            />
+          </div>
+          {aiError && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertDescription>{aiError}</AlertDescription>
+            </Alert>
+          )}
+        </CardContent>
+        <CardFooter>
+          <Button 
+            onClick={handleAiGenerateRecipe} 
+            disabled={isAiLoading || !aiPrompt.trim()}
+            className="flex items-center gap-2"
+          >
+            {isAiLoading ? (
+              <>
+                <Loader2 className="h-4 w-4 animate-spin" />
+                生成中...
+              </>
+            ) : (
+              <>
+                <PlusIcon className="h-4 w-4" />
+                AI生成菜谱
+              </>
+            )}
+          </Button>
+        </CardFooter>
+      </Card>
 
       <form onSubmit={handleSubmit}>
         <Tabs value={activeTab} onValueChange={setActiveTab}>
@@ -672,7 +802,10 @@ export default function CreateRecipePage() {
                   }))}
                   initialServings={formData.servings}
                   onCalculate={(nutritionInfo) => {
-                    setFormData((prev) => ({ ...prev, nutritionInfo }))
+                    setFormData((prev) => ({ 
+                      ...prev, 
+                      nutritionInfo: { ...nutritionInfo } as ExtendedNutritionInfo 
+                    }))
                   }}
                 />
               </CardContent>

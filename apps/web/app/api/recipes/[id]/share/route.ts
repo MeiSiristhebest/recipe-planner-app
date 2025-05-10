@@ -4,9 +4,12 @@ import { auth } from "@/lib/auth";
 import { createClient } from "@supabase/supabase-js";
 
 // 初始化Supabase客户端
-const supabaseUrl = "https://desoaoudgnhrhdpsqcbu.supabase.co";
-const supabaseKey =
-  "1e543fe4e8ffdd81c53a42edca7a15cd048839b5a228c97a05b63ef0fe736ab2";
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  throw new Error("Supabase URL or Service Role Key is not defined in environment variables.");
+}
 
 // 创建Supabase客户端，添加重试和超时配置
 const supabase = createClient(supabaseUrl, supabaseKey, {

@@ -3,11 +3,12 @@
 import { useEffect } from "react"
 import Link from "next/link"
 import Image from "next/image"
-import { useInfiniteQuery } from "@tanstack/react-query"
-import { useInView } from "react-intersection-observer"
+import { useQuery } from "@tanstack/react-query"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Card, CardContent, CardFooter } from "@repo/ui/card"
 import { Button } from "@repo/ui/button"
 import type { Recipe } from "@recipe-planner/types"
+import { PaginationBar } from "@/components/shared/pagination-bar"
 
 interface RecipeListProps {
   searchParams: {
@@ -32,10 +33,12 @@ interface RecipesResponse {
 }
 
 export function RecipeList({ searchParams }: RecipeListProps) {
-  const { ref, inView } = useInView()
+  const router = useRouter()
+  const currentSearchParams = useSearchParams()
 
-  // 构建查询参数
-  const buildQueryString = (page: number) => {
+  const currentPage = Number(searchParams.page) || 1
+
+  const buildQueryString = (pageToFetch: number) => {
     const params = new URLSearchParams()
 
     if (searchParams.query) params.set("query", searchParams.query)
@@ -44,15 +47,14 @@ export function RecipeList({ searchParams }: RecipeListProps) {
     if (searchParams.cookingTimeMax) params.set("cookingTimeMax", searchParams.cookingTimeMax)
     if (searchParams.tag) params.set("tag", searchParams.tag)
     if (searchParams.sort) params.set("sort", searchParams.sort)
-    params.set("page", page.toString())
+    params.set("page", pageToFetch.toString())
     params.set("limit", "12")
 
     return params.toString()
   }
 
-  // 获取食谱数据
-  const fetchRecipes = async ({ pageParam = 1 }): Promise<RecipesResponse> => {
-    const queryString = buildQueryString(pageParam)
+  const fetchRecipes = async (pageToFetch: number): Promise<RecipesResponse> => {
+    const queryString = buildQueryString(pageToFetch)
     const response = await fetch(`/api/recipes?${queryString}`)
 
     if (!response.ok) {
@@ -62,35 +64,29 @@ export function RecipeList({ searchParams }: RecipeListProps) {
     return response.json()
   }
 
-  const { data, fetchNextPage, hasNextPage, isFetchingNextPage, status } = useInfiniteQuery({
-    queryKey: ["recipes", searchParams],
-    queryFn: fetchRecipes,
-    initialPageParam: 1,
-    getNextPageParam: (lastPage) => {
-      return lastPage.pagination.page < lastPage.pagination.pages ? lastPage.pagination.page + 1 : undefined
-    },
+  const { data, status, error, isLoading, isFetching } = useQuery<RecipesResponse, Error>({
+    queryKey: ["recipes", { ...searchParams, page: currentPage.toString() }],
+    queryFn: () => fetchRecipes(currentPage),
   })
 
-  // 当视图中的加载更多元素可见时，加载下一页
-  useEffect(() => {
-    if (inView && hasNextPage && !isFetchingNextPage) {
-      fetchNextPage()
-    }
-  }, [inView, fetchNextPage, hasNextPage, isFetchingNextPage])
+  const handlePageChange = (newPage: number) => {
+    const params = new URLSearchParams(currentSearchParams.toString())
+    params.set("page", newPage.toString())
+    router.push(`/recipes?${params.toString()}`)
+  }
 
-  // 扁平化所有页面的食谱
-  const recipes = data?.pages.flatMap((page) => page.recipes) || []
-  const totalRecipes = data?.pages[0]?.pagination.total || 0
+  const recipes = data?.recipes || []
+  const pagination = data?.pagination
 
-  if (status === "pending") {
+  if (isLoading || (isFetching && !data)) {
     return <div className="text-center py-12">加载中...</div>
   }
 
-  if (status === "error") {
+  if (error) {
     return (
       <div className="text-center py-12">
-        <p className="text-destructive mb-4">加载失败，请稍后再试</p>
-        <Button onClick={() => window.location.reload()}>重试</Button>
+        <p className="text-destructive mb-4">加载失败，请稍后再试: {error.message}</p>
+        <Button onClick={() => router.refresh()}>重试</Button>
       </div>
     )
   }
@@ -109,7 +105,7 @@ export function RecipeList({ searchParams }: RecipeListProps) {
   return (
     <div>
       <div className="flex justify-between items-center mb-6">
-        <p className="text-muted-foreground">显示 {totalRecipes} 个结果</p>
+        <p className="text-muted-foreground">显示 {pagination?.total || 0} 个结果中第 {recipes.length > 0 ? ((pagination?.page || 1) - 1) * (pagination?.limit || 12) + 1 : 0} - {((pagination?.page || 1) - 1) * (pagination?.limit || 12) + recipes.length} 项</p>
       </div>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -118,11 +114,13 @@ export function RecipeList({ searchParams }: RecipeListProps) {
         ))}
       </div>
 
-      {hasNextPage && (
-        <div ref={ref} className="flex justify-center mt-8">
-          <Button variant="outline" onClick={() => fetchNextPage()} disabled={isFetchingNextPage}>
-            {isFetchingNextPage ? "加载中..." : "加载更多"}
-          </Button>
+      {pagination && pagination.pages > 1 && (
+        <div className="flex justify-center mt-8">
+          <PaginationBar
+            currentPage={pagination.page}
+            totalPages={pagination.pages}
+            onPageChange={handlePageChange}
+          />
         </div>
       )}
     </div>

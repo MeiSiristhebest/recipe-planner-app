@@ -11,10 +11,10 @@ import { useQuery } from '@tanstack/react-query'
 import { type Recipe } from '@recipe-planner/types'
 import { Skeleton } from "@repo/ui/skeleton"
 
-// API function to fetch recipes (adjust URL and params as needed)
+// API function to fetch recipes
 async function fetchFeaturedRecipes(): Promise<{ recipes: Recipe[], total: number }> {
-  // Fetch, for example, 6 recipes sorted by rating or creation date
-  const response = await fetch('/api/recipes?limit=6&sort=newest') // Or sort=rating_desc
+  // Fetch 6 recipes sorted by rating
+  const response = await fetch('/api/recipes?limit=6&sort=rating') // Changed sort to 'rating'
   if (!response.ok) {
     throw new Error('Failed to fetch recipes')
   }
@@ -160,11 +160,9 @@ interface RecipeCardProps {
 function RecipeCard({ recipe }: RecipeCardProps) {
   const fallbackImage = "/placeholder.svg" // Define a fallback image
 
-  // --- Rating Display --- 
-  // API now returns averageRating as null/0 and includes _count.ratings
   const ratingCount = recipe._count?.ratings ?? 0;
-  const hasRatings = ratingCount > 0;
-  // const displayRating = recipe.averageRating?.toFixed(1) ?? "-"; // Calculation removed/commented as API doesn't provide it reliably here
+  const averageRating = recipe.averageRating ?? 0; // Get averageRating
+  const displayRatingText = averageRating > 0 ? averageRating.toFixed(1) : "-";
 
   return (
     <Card className="overflow-hidden transition-all duration-300 ease-in-out hover:shadow-xl hover:border-primary flex flex-col h-full">
@@ -182,10 +180,10 @@ function RecipeCard({ recipe }: RecipeCardProps) {
         <div className="flex justify-between items-start mb-2">
           <h3 className="text-lg font-semibold leading-snug flex-1 mr-2">{recipe.title}</h3>
           <div className="flex items-center flex-shrink-0">
-            {/* Display star based on whether ratings exist */}
-            <Star className={`w-4 h-4 ${hasRatings ? "text-accent fill-accent" : "text-muted-foreground"}`} />
-            {/* Optionally display the count */}
-            <span className="text-xs text-muted-foreground ml-1">({ratingCount})</span>
+            <Star className={`w-4 h-4 ${averageRating > 0 ? "text-accent fill-accent" : "text-muted-foreground"}`} />
+            <span className="text-xs text-muted-foreground ml-1">
+              {displayRatingText}
+            </span>
           </div>
         </div>
         <p className="text-sm text-muted-foreground mb-2">烹饪时间: {recipe.cookingTime}分钟</p>

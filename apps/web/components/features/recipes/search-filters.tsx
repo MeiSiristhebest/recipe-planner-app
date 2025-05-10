@@ -139,15 +139,23 @@ export function SearchFilters({ onSearch, className = "" }: SearchFiltersProps) 
           分类
         </h3>
         <div className="space-y-2">
-          {["快手菜", "家常菜", "烘焙", "汤羹", "早餐", "午餐", "晚餐"].map((category) => (
-            <div key={category} className="flex items-center space-x-2">
+          {[
+            { actualValue: "快手菜", displayName: "快手菜" },
+            { actualValue: "家常菜", displayName: "家常菜" },
+            { actualValue: "烘焙甜点", displayName: "烘焙甜点" },
+            { actualValue: "滋补靓汤", displayName: "滋补靓汤" },
+            { actualValue: "活力早餐", displayName: "活力早餐" },
+            { actualValue: "午餐", displayName: "午餐" },
+            { actualValue: "晚餐", displayName: "晚餐" },
+          ].map((category) => (
+            <div key={category.actualValue} className="flex items-center space-x-2">
               <Checkbox
-                id={`category-${category}`}
-                checked={filters.category === category}
-                onCheckedChange={() => handleCategoryToggle(category)}
+                id={`category-${category.actualValue}`}
+                checked={filters.category === category.actualValue}
+                onCheckedChange={() => handleCategoryToggle(category.actualValue)}
               />
-              <Label htmlFor={`category-${category}`} className="text-sm font-normal">
-                {category}
+              <Label htmlFor={`category-${category.actualValue}`} className="text-sm font-normal">
+                {category.displayName}
               </Label>
             </div>
           ))}
@@ -199,11 +207,21 @@ export function SearchFilters({ onSearch, className = "" }: SearchFiltersProps) 
           特殊标签
         </h3>
         <div className="space-y-2">
-          {["素食", "低卡", "无麸质", "高蛋白", "儿童友好"].map((tag) => (
-            <div key={tag} className="flex items-center space-x-2">
-              <Checkbox id={`tag-${tag}`} checked={filters.tag === tag} onCheckedChange={() => handleTagToggle(tag)} />
-              <Label htmlFor={`tag-${tag}`} className="text-sm font-normal">
-                {tag}
+          {[
+            { actualValue: "素食可选", displayName: "素食" },
+            { actualValue: "低卡轻脂", displayName: "低卡" },
+            { actualValue: "无麸质", displayName: "无麸质" },
+            { actualValue: "高蛋白", displayName: "高蛋白" },
+            { actualValue: "儿童喜爱", displayName: "儿童友好" },
+          ].map((tag) => (
+            <div key={tag.actualValue} className="flex items-center space-x-2">
+              <Checkbox 
+                id={`tag-${tag.actualValue}`} 
+                checked={filters.tag === tag.actualValue} 
+                onCheckedChange={() => handleTagToggle(tag.actualValue)} 
+              />
+              <Label htmlFor={`tag-${tag.actualValue}`} className="text-sm font-normal">
+                {tag.displayName}
               </Label>
             </div>
           ))}

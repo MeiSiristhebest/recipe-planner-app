@@ -7,8 +7,16 @@ import { Clock, ChefHat, Users, Star } from "lucide-react"
 import { createClient } from "@supabase/supabase-js"
 
 // 初始化Supabase客户端
-const supabaseUrl = "https://desoaoudgnhrhdpsqcbu.supabase.co"
-const supabaseKey = "1e543fe4e8ffdd81c53a42edca7a15cd048839b5a228c97a05b63ef0fe736ab2"
+const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+
+if (!supabaseUrl || !supabaseKey) {
+  // 对于客户端组件，可能需要不同的错误处理方式
+  // 例如，可以显示一个错误消息给用户，或者在构建时失败（如果可能）
+  console.error("Supabase URL or Anon Key is not defined for client. Check environment variables.");
+  // 可以在此处返回一个表示错误的组件或null
+  throw new Error("Supabase client configuration error."); 
+}
 
 // 创建Supabase客户端，添加重试和超时配置
 const supabase = createClient(supabaseUrl, supabaseKey, {
