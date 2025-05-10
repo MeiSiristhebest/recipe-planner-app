@@ -1,7 +1,0 @@
-{
-  "/(main)/recipes/[recipeId]/page": "app/(main)/recipes/[recipeId]/page.js",
-  "/page": "app/page.js",
-  "/not-found": "app/not-found.js",
-  "/api/recipes/route": "app/api/recipes/route.js",
-  "/api/recipes/[id]/route": "app/api/recipes/[id]/route.js"
-}
