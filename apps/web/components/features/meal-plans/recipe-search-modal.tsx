@@ -1,13 +1,13 @@
 "use client"
 
 import type React from "react"
-
-import { useState } from "react"
+import { useState, useMemo } from "react"
 import { Input } from "@repo/ui/input"
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@repo/ui/dialog"
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@repo/ui/dialog"
+import { Button } from "@repo/ui/button"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@repo/ui/tabs"
 import { Card, CardContent } from "@repo/ui/card"
-import { Search } from "lucide-react"
+import { Search, CheckCircle } from "lucide-react"
 import Image from "next/image"
 import type { Recipe } from "@recipe-planner/types"
 import type { DayOfWeek, MealTime } from "@/store/meal-plan-store"
@@ -15,7 +15,7 @@ import type { DayOfWeek, MealTime } from "@/store/meal-plan-store"
 interface RecipeSearchModalProps {
   isOpen: boolean
   onClose: () => void
-  onSelectRecipe: (recipe: Recipe, day: DayOfWeek, mealTime: MealTime) => void
+  onConfirmSelection: (recipes: Recipe[], day: DayOfWeek, mealTime: MealTime) => void
   day: DayOfWeek
   mealTime: MealTime
   favoriteRecipes: Recipe[]
@@ -28,7 +28,7 @@ interface RecipeSearchModalProps {
 export function RecipeSearchModal({
   isOpen,
   onClose,
-  onSelectRecipe,
+  onConfirmSelection,
   day,
   mealTime,
   favoriteRecipes,
@@ -38,21 +38,82 @@ export function RecipeSearchModal({
   isLoading = false,
 }: RecipeSearchModalProps) {
   const [searchQuery, setSearchQuery] = useState("")
+  const [selectedRecipeIds, setSelectedRecipeIds] = useState<string[]>([])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
     onSearch(searchQuery)
   }
 
+  const toggleRecipeSelection = (recipeId: string) => {
+    setSelectedRecipeIds((prevSelectedIds) =>
+      prevSelectedIds.includes(recipeId)
+        ? prevSelectedIds.filter((id) => id !== recipeId)
+        : [...prevSelectedIds, recipeId]
+    )
+  }
+
+  const allAvailableRecipes = useMemo(() => {
+    const recipesMap = new Map<string, Recipe>();
+    [...favoriteRecipes, ...recentRecipes, ...searchResults].forEach(recipe => {
+      if (recipe && recipe.id && !recipesMap.has(recipe.id)) {
+        recipesMap.set(recipe.id, recipe);
+      }
+    });
+    return Array.from(recipesMap.values());
+  }, [favoriteRecipes, recentRecipes, searchResults]);
+  
+
+  const handleConfirm = () => {
+    const recipesToConfirm = allAvailableRecipes.filter(recipe => selectedRecipeIds.includes(recipe.id));
+    onConfirmSelection(recipesToConfirm, day, mealTime)
+    setSelectedRecipeIds([])
+    onClose()
+  }
+
+  const renderRecipeList = (recipes: Recipe[], listName: string) => {
+    if (isLoading && listName === "search") {
+      return <div className="text-center py-8 text-muted-foreground">搜索中...</div>
+    }
+    if (!recipes || recipes.length === 0) {
+      let message = "暂无食谱";
+      if (listName === "search") {
+        message = searchQuery ? "没有找到匹配的食谱" : "请输入搜索关键词";
+      } else if (listName === "favorites") {
+        message = "暂无收藏食谱";
+      } else if (listName === "recent") {
+        message = "暂无最近浏览食谱";
+      }
+      return <div className="text-center py-8 text-muted-foreground">{message}</div>
+    }
+    return (
+      <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 max-h-[300px] overflow-y-auto p-1">
+        {recipes.map((recipe) => (
+          <RecipeCard
+            key={recipe.id}
+            recipe={recipe}
+            isSelected={selectedRecipeIds.includes(recipe.id)}
+            onToggleSelect={() => toggleRecipeSelection(recipe.id)}
+          />
+        ))}
+      </div>
+    )
+  }
+
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+    <Dialog open={isOpen} onOpenChange={(open) => {
+      if (!open) {
+        onClose();
+        setSelectedRecipeIds([]);
+      }
+    }}>
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>
-            添加食谱到 {day} {mealTime}
+            添加到 {day} {mealTime}
           </DialogTitle>
           <DialogDescription>
-            通过搜索、从收藏或最近浏览中选择食谱添加到您的餐饮计划中。
+            勾选食谱，然后点击"确认添加"按钮。
           </DialogDescription>
         </DialogHeader>
         <div className="py-4">
@@ -77,46 +138,26 @@ export function RecipeSearchModal({
             </TabsList>
 
             <TabsContent value="search" className="space-y-4 pt-4">
-              {isLoading ? (
-                <div className="text-center py-8 text-muted-foreground">搜索中...</div>
-              ) : searchResults.length > 0 ? (
-                <div className="grid grid-cols-2 gap-4 max-h-[400px] overflow-y-auto">
-                  {searchResults.map((recipe) => (
-                    <RecipeCard key={recipe.id} recipe={recipe} onClick={() => onSelectRecipe(recipe, day, mealTime)} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">
-                  {searchQuery ? "没有找到匹配的食谱" : "请输入搜索关键词"}
-                </div>
-              )}
+              {renderRecipeList(searchResults, "search")}
             </TabsContent>
 
             <TabsContent value="favorites" className="space-y-4 pt-4">
-              {favoriteRecipes.length > 0 ? (
-                <div className="grid grid-cols-2 gap-4 max-h-[400px] overflow-y-auto">
-                  {favoriteRecipes.map((recipe) => (
-                    <RecipeCard key={recipe.id} recipe={recipe} onClick={() => onSelectRecipe(recipe, day, mealTime)} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">暂无收藏食谱</div>
-              )}
+              {renderRecipeList(favoriteRecipes, "favorites")}
             </TabsContent>
 
             <TabsContent value="recent" className="space-y-4 pt-4">
-              {recentRecipes.length > 0 ? (
-                <div className="grid grid-cols-2 gap-4 max-h-[400px] overflow-y-auto">
-                  {recentRecipes.map((recipe) => (
-                    <RecipeCard key={recipe.id} recipe={recipe} onClick={() => onSelectRecipe(recipe, day, mealTime)} />
-                  ))}
-                </div>
-              ) : (
-                <div className="text-center py-8 text-muted-foreground">暂无最近浏览食谱</div>
-              )}
+              {renderRecipeList(recentRecipes, "recent")}
             </TabsContent>
           </Tabs>
         </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => { onClose(); setSelectedRecipeIds([]); }}>
+            取消
+          </Button>
+          <Button onClick={handleConfirm} disabled={selectedRecipeIds.length === 0}>
+            确认添加 ({selectedRecipeIds.length})
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
@@ -124,17 +165,30 @@ export function RecipeSearchModal({
 
 interface RecipeCardProps {
   recipe: Recipe
-  onClick: () => void
+  isSelected: boolean
+  onToggleSelect: () => void
 }
 
-function RecipeCard({ recipe, onClick }: RecipeCardProps) {
+function RecipeCard({ recipe, isSelected, onToggleSelect }: RecipeCardProps) {
   return (
-    <Card className="cursor-pointer hover:bg-muted/50" onClick={onClick}>
+    <Card 
+      className={`cursor-pointer hover:bg-muted/50 relative ${isSelected ? 'border-primary ring-2 ring-primary' : ''}`}
+      onClick={onToggleSelect}
+    >
+      {isSelected && (
+        <div className="absolute top-1 right-1 bg-primary text-primary-foreground rounded-full p-0.5">
+          <CheckCircle className="h-4 w-4" />
+        </div>
+      )}
       <CardContent className="p-3">
         <div className="relative h-24 w-full rounded-md overflow-hidden mb-2">
-          <Image src={recipe.coverImage || "/placeholder.svg"} alt={recipe.title} fill className="object-cover" />
+          <Image 
+            src={recipe.coverImage || "/placeholder.svg"} 
+            alt={recipe.title} 
+            fill sizes="100vw"
+            className="object-cover" />
         </div>
-        <h4 className="font-medium text-sm">{recipe.title}</h4>
+        <h4 className="font-medium text-sm truncate">{recipe.title}</h4>
         <p className="text-xs text-muted-foreground">烹饪时间: {recipe.cookingTime}分钟</p>
       </CardContent>
     </Card>

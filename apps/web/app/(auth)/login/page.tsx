@@ -36,18 +36,19 @@ export default function LoginPage() {
 
     try {
       const result = await signIn("credentials", {
-        redirect: false,
         email: email,
         password: password,
+        callbackUrl: callbackUrl,
       })
 
       if (result?.error) {
         setError("登录失败: " + (result.error === "CredentialsSignin" ? "无效的邮箱或密码。" : result.error))
         setIsLoading(false)
-      } else if (result?.ok) {
-        router.push(callbackUrl)
-      } else {
-        setError("发生未知错误，请重试。")
+      } else if (result && !result.ok && !result.error) {
+        setError("登录未能成功，请检查您的凭据或网络连接。")
+        setIsLoading(false)
+      } else if (!result) {
+        setError("登录过程中发生意外错误，请稍后重试。")
         setIsLoading(false)
       }
     } catch (err) {

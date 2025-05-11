@@ -2,9 +2,9 @@ import { type NextRequest, NextResponse } from "next/server"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: { recipeId: string } }) {
   try {
-    const recipeId = params.id
+    const recipeId = params.recipeId
     const session = await auth()
 
     if (!session?.user) {

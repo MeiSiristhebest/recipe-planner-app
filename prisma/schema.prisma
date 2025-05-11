@@ -25,6 +25,7 @@ model User {
   shoppingLists ShoppingList[]
   comments      Comment[]
   ratings       Rating[]
+  recentlyViewedRecipe RecentlyViewedRecipe[]
 }
 
 model Recipe {
@@ -49,6 +50,7 @@ model Recipe {
   mealPlanItems   MealPlanItem[]
   comments        Comment[]
   ratings         Rating[]
+  recentlyViewedRecipe RecentlyViewedRecipe[]
 }
 
 model Category {
@@ -164,6 +166,18 @@ model Rating {
   recipeId  String
 
   @@unique([userId, recipeId])
+}
+
+model RecentlyViewedRecipe {
+  id        String   @id @default(cuid())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  userId    String
+  recipe    Recipe   @relation(fields: [recipeId], references: [id], onDelete: Cascade)
+  recipeId  String
+  viewedAt  DateTime @default(now())
+
+  @@unique([userId, recipeId]) // Ensure a user/recipe pair is unique, effectively tracking the last view
+  @@index([userId, viewedAt])    // Index for quickly fetching a user's recently viewed items
 }
 
 model Ingredient {

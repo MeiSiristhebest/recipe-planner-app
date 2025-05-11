@@ -12,6 +12,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/avatar"
 import { Clock, ChefHat, Users, Heart, Plus, Star, Loader2, Send, LinkIcon } from "lucide-react"
 import { ShareDialog } from "@/components/features/recipes/share-dialog"
 import { NutritionDisplay } from "@/components/features/nutrition/nutrition-display"
+import { AddToMealPlanDialog } from "@/components/features/meal-plans/AddToMealPlanDialog"
 import { type Recipe, type Comment, type User } from "@recipe-planner/types"; // Assuming Comment type is available
 import { Skeleton } from "@repo/ui/skeleton"
 import { format } from 'date-fns'
@@ -93,7 +94,7 @@ async function toggleFavoriteRecipe({ recipeId, favorited }: { recipeId: string;
     const errorData = await response.json().catch(() => ({}));
     throw new Error(errorData.error || 'Failed to update favorite status');
   }
-  return response.json(); 
+  return response.json();
 }
 
 export default function RecipeDetailPage({ params }: { params: { recipeId: string } }) {
@@ -106,7 +107,7 @@ export default function RecipeDetailPage({ params }: { params: { recipeId: strin
   const [isFavorited, setIsFavorited] = useState(false);
   const [favoriteCount, setFavoriteCount] = useState(0);
   const [isShareDialogOpen, setIsShareDialogOpen] = useState(false);
-  // const [isAddToMealPlanDialogOpen, setIsAddToMealPlanDialogOpen] = useState(false); // For later use
+  const [isAddToMealPlanDialogOpen, setIsAddToMealPlanDialogOpen] = useState(false);
 
   const { data: recipe, isLoading, error: queryError, isError } = useQuery<RecipeDetailData, Error>({
     queryKey: ['recipeDetails', recipeId],
@@ -121,6 +122,23 @@ export default function RecipeDetailPage({ params }: { params: { recipeId: strin
       setFavoriteCount(recipe.favoritesCount || 0);
     }
   }, [recipe]); // Dependency array includes recipe
+
+  // useEffect to log recipe view
+  useEffect(() => {
+    if (recipeId && session?.user?.id) {
+      const logView = async () => {
+        try {
+          await fetch(`/api/recipes/${recipeId}/view`, {
+            method: 'POST',
+          });
+          // console.log('Recipe view logged'); // Optional: for debugging
+        } catch (err) {
+          console.error('Failed to log recipe view:', err);
+        }
+      };
+      logView();
+    }
+  }, [recipeId, session?.user?.id]); // Re-run if recipeId or user session changes
 
   // Query for related recipes
   const { data: relatedRecipes, isLoading: isLoadingRelated } = useQuery<RelatedRecipePreview[], Error>({
@@ -198,10 +216,7 @@ export default function RecipeDetailPage({ params }: { params: { recipeId: strin
       alert("请先登录才能将食谱添加到周计划！");
       return;
     }
-    // Placeholder logic
-    // Later, this will open a dialog: setIsAddToMealPlanDialogOpen(true);
-    alert(`食谱 "${recipe?.title}" (ID: ${recipeId}) 将被添加到周计划。此功能待实现。`);
-    console.log("Add to Meal Plan clicked for recipe:", recipeId, recipe?.title);
+    setIsAddToMealPlanDialogOpen(true);
   };
 
   // Re-added ingredientsForUI processing logic
@@ -262,9 +277,30 @@ export default function RecipeDetailPage({ params }: { params: { recipeId: strin
   );
 
   return (
-    <div className="container py-8">
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-        <div className="lg:col-span-2 space-y-8">
+    <div className="container mx-auto px-4 py-8">
+      {/* Share Dialog */}
+      <ShareDialog
+        recipeId={recipe.id}
+        recipeTitle={recipe.title}
+        recipeCoverImage={recipe.coverImage}
+        open={isShareDialogOpen}
+        onOpenChange={setIsShareDialogOpen}
+      />
+      {/* Add To Meal Plan Dialog */}
+      <AddToMealPlanDialog 
+        recipe={recipe ? { id: recipe.id, title: recipe.title, servings: recipe.servings } : null}
+        open={isAddToMealPlanDialogOpen}
+        onOpenChange={setIsAddToMealPlanDialogOpen}
+        onSuccess={() => {
+          // Placeholder for success notification, e.g., toast
+          alert("食谱已成功添加到周计划！(从详情页回调)");
+          // Optionally, invalidate queries to refresh meal plan data if displayed on this page or elsewhere
+          // queryClient.invalidateQueries({ queryKey: ['mealPlans'] }); 
+        }}
+      />
+
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <div className="md:col-span-2 space-y-8">
           {/* Recipe Header */}
           <div>
             <h1 className="text-3xl font-bold mb-4">{recipe.title}</h1>
@@ -337,9 +373,9 @@ export default function RecipeDetailPage({ params }: { params: { recipeId: strin
             <TabsContent value="ingredients" className="pt-4">
               {ingredientsForUI.length > 0 ? (
                 <IngredientList ingredients={ingredientsForUI} />
-              ) : (
-                <p className="text-muted-foreground text-center py-4">暂无食材信息</p>
-              )}
+                  ) : (
+                    <p className="text-muted-foreground text-center py-4">暂无食材信息</p>
+                  )}
             </TabsContent>
 
             {/* Instructions Tab */}
@@ -440,7 +476,7 @@ export default function RecipeDetailPage({ params }: { params: { recipeId: strin
         </div>
 
         {/* Sidebar */}
-        <div className="lg:col-span-1 space-y-8">
+        <div className="md:col-span-1 space-y-8">
           <div className="p-4 border rounded-lg bg-card shadow">
             <h3 className="text-lg font-semibold mb-4">相关食谱</h3>
             <div className="space-y-4">
@@ -483,13 +519,6 @@ export default function RecipeDetailPage({ params }: { params: { recipeId: strin
           {/* You can add more sidebar content here if needed */}
         </div>
       </div>
-
-      <ShareDialog
-        open={isShareDialogOpen}
-        onOpenChange={setIsShareDialogOpen}
-        recipeId={recipe.id}
-        recipeTitle={recipe.title}
-      />
     </div>
   );
 }

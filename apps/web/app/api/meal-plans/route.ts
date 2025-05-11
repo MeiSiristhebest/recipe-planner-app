@@ -7,36 +7,49 @@ export async function GET(request: NextRequest) {
   try {
     const session = await auth()
 
-    if (!session?.user) {
+    if (!session?.user?.id) {
       return NextResponse.json({ error: "未授权" }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
     const weekStart = searchParams.get("weekStart")
-    const isTemplate = searchParams.get("isTemplate") === "true"
+    const isTemplateQuery = searchParams.get("isTemplate")
+    const view = searchParams.get("view")
 
-    // Get meal plans for the user
     const query: any = {
       userId: session.user.id,
     }
 
     if (weekStart) {
-      // If weekStart is provided, get the specific week's plan
       const startDate = new Date(weekStart)
       const endDate = new Date(startDate)
       endDate.setDate(startDate.getDate() + 6)
-
       query.startDate = startDate
       query.endDate = endDate
     }
 
-    if (isTemplate !== undefined) {
-      query.isTemplate = isTemplate
+    if (isTemplateQuery !== null) {
+      query.isTemplate = isTemplateQuery === "true"
+    }
+
+    let selectFields = undefined;
+    let includeItems = true;
+
+    if (view === "simple") {
+      selectFields = {
+        id: true,
+        name: true,
+        startDate: true,
+        endDate: true,
+        isTemplate: true,
+      };
+      includeItems = false;
     }
 
     const mealPlans = await prisma.mealPlan.findMany({
       where: query,
-      include: {
+      select: selectFields,
+      include: includeItems ? {
         items: {
           include: {
             recipe: {
@@ -50,8 +63,8 @@ export async function GET(request: NextRequest) {
             },
           },
         },
-      },
-      orderBy: isTemplate ? { name: "asc" } : { startDate: "desc" },
+      } : undefined,
+      orderBy: query.isTemplate ? { name: "asc" } : { startDate: "desc" },
     })
 
     return NextResponse.json(mealPlans)

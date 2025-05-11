@@ -181,8 +181,8 @@ export function ShareDialog({
                     <MessageSquare className="h-4 w-4" />
                     QQ
                   </Button>
-                  <Button 
-                    variant="outline" 
+                  <Button
+                    variant="outline"
                     className="w-full flex items-center justify-center gap-2 py-3" 
                     onClick={() => shareToSocial("email")}
                   >

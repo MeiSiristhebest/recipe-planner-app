@@ -75,13 +75,13 @@ export function NutritionDisplay({
 
   // 始终基于传入的 nutritionInfo (每份) 和 servings 计算总营养成分
   const calculatedTotalNutrition = servings > 1 ? {
-    calories: nutritionInfo.calories * servings,
-    protein: nutritionInfo.protein * servings,
-    fat: nutritionInfo.fat * servings,
-    carbs: nutritionInfo.carbs * servings,
-    fiber: nutritionInfo.fiber * servings,
-    sugar: nutritionInfo.sugar * servings,
-    sodium: nutritionInfo.sodium * servings,
+          calories: nutritionInfo.calories * servings,
+          protein: nutritionInfo.protein * servings,
+          fat: nutritionInfo.fat * servings,
+          carbs: nutritionInfo.carbs * servings,
+          fiber: nutritionInfo.fiber * servings,
+          sugar: nutritionInfo.sugar * servings,
+          sodium: nutritionInfo.sodium * servings,
   } : { ...nutritionInfo }
 
   // 当前显示的营养信息

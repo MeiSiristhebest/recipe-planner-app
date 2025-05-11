@@ -3,9 +3,9 @@ import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
 import { recipeSchema } from "@repo/validators"
 
-export async function GET(request: NextRequest, { params }: { params: { id: string } }) {
+export async function GET(request: NextRequest, { params }: { params: { recipeId: string } }) {
   try {
-    const recipeId = params.id
+    const recipeId = params.recipeId
     const session = await auth()
 
     const recipe = await prisma.recipe.findUnique({
@@ -98,6 +98,7 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       averageRating: ratings._avg.value || 0,
       isFavorited,
       userRating,
+      favoritesCount: recipe._count.favorites,
     })
   } catch (error) {
     console.error("Error fetching recipe:", error)
@@ -105,9 +106,9 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function PUT(request: NextRequest, { params }: { params: { id: string } }) {
+export async function PUT(request: NextRequest, { params }: { params: { recipeId: string } }) {
   try {
-    const recipeId = params.id
+    const recipeId = params.recipeId
     const session = await auth()
 
     if (!session?.user) {
@@ -177,9 +178,9 @@ export async function PUT(request: NextRequest, { params }: { params: { id: stri
   }
 }
 
-export async function DELETE(request: NextRequest, { params }: { params: { id: string } }) {
+export async function DELETE(request: NextRequest, { params }: { params: { recipeId: string } }) {
   try {
-    const recipeId = params.id
+    const recipeId = params.recipeId
     const session = await auth()
 
     if (!session?.user) {

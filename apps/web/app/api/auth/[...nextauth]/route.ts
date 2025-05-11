@@ -65,25 +65,30 @@ export const authOptions: AuthOptions = {
   },
   callbacks: {
     async jwt({ token, user, trigger, session }) {
-      if (trigger === "update" && session?.name) {
-        token.name = session.name;
-        // token.picture = session.image; // 如果也允许更新图片
+      // console.log("JWT Callback triggered. Trigger:", trigger, "User:", user, "Token:", token, "Session for update:", session);
+      if (trigger === "update" && session) { // 确保 session 存在
+        if (session.name) token.name = session.name;
+        if (session.image) token.picture = session.image; // next-auth 倾向于用 picture
+        // 注意： email 通常不应该在这里被用户直接更新，除非有特殊流程
       }
-      if (user) {
+      if (user) { // 这个 user 对象来自 authorize 函数的返回或 OAuth provider
         token.id = user.id;
-        // token.name = user.name;
-        // token.email = user.email;
-        // token.picture = user.image;
+        token.name = user.name;
+        token.email = user.email; // 将 email 也加入 token
+        token.picture = user.image; // 将 image 加入 token (NextAuth 期望的是 picture 字段)
       }
+      // console.log("JWT Callback returning token:", token);
       return token;
     },
     async session({ session, token }) {
+      // console.log("Session Callback triggered. Token:", token, "Session:", session);
       if (token && session.user) {
         session.user.id = token.id as string;
-        session.user.name = token.name; // 从 token 中获取 name
-        // session.user.email = token.email; // next-auth 默认会处理 email
-        // session.user.image = token.picture; // 从 token 中获取 image
+        session.user.name = token.name as string | null | undefined; // 确保类型匹配
+        session.user.email = token.email as string | null | undefined; // 从 token 中获取 email
+        session.user.image = token.picture as string | null | undefined; // 从 token 中获取 image (token 中是 picture)
       }
+      // console.log("Session Callback returning session:", session);
       return session;
     },
   },

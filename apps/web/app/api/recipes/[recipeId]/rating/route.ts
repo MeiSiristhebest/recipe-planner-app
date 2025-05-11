@@ -7,9 +7,9 @@ const ratingSchema = z.object({
   value: z.number().int().min(1).max(5),
 })
 
-export async function POST(request: NextRequest, { params }: { params: { id: string } }) {
+export async function POST(request: NextRequest, { params }: { params: { recipeId: string } }) {
   try {
-    const recipeId = params.id
+    const recipeId = params.recipeId
     const session = await auth()
 
     if (!session?.user) {

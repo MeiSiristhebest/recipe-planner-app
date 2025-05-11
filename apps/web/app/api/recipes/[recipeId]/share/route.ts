@@ -6,11 +6,11 @@ import { auth } from "@/lib/auth";
 
 export async function POST(
   request: Request,
-  { params }: { params: { id: string } }
+  { params }: { params: { recipeId: string } }
 ) {
   try {
     const session = await auth();
-    const recipeId = params.id;
+    const recipeId = params.recipeId;
 
     if (!session?.user) {
       return NextResponse.json({ error: "未授权" }, { status: 401 });

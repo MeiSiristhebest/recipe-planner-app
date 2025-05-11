@@ -2,8 +2,8 @@
 
 import type React from "react"
 
-import { useState } from "react"
-import { useRouter } from "next/navigation"
+import { useState, useEffect } from "react"
+import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@repo/ui/button"
 import { Input } from "@repo/ui/input"
 import { Label } from "@repo/ui/label"
@@ -18,6 +18,7 @@ import { ImageUpload } from "@/components/features/recipes/image-upload"
 import Image from "next/image"
 import { NutritionCalculator } from "@/components/features/nutrition/nutrition-calculator"
 import type { NutritionInfo } from "@/components/features/nutrition/nutrition-display"
+import { toast } from "react-hot-toast"
 
 // 扩展导入的NutritionInfo类型，添加索引签名
 type ExtendedNutritionInfo = NutritionInfo & {
@@ -38,6 +39,7 @@ type Instruction = {
 
 export default function CreateRecipePage() {
   const router = useRouter()
+  const searchParams = useSearchParams()
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState("basic")
@@ -57,6 +59,8 @@ export default function CreateRecipePage() {
     nutritionInfo: {} as ExtendedNutritionInfo,
     categoryIds: [] as string[],
     tagIds: [] as string[],
+    aiSuggestedMealTime: "",
+    aiSuggestedMealDate: "",
   })
 
   const [coverImage, setCoverImage] = useState<string | null>(null)
@@ -84,6 +88,58 @@ export default function CreateRecipePage() {
     { id: "4", name: "高蛋白" },
     { id: "5", name: "儿童友好" },
   ]
+
+  // useEffect to pre-fill form from AI suggestion query parameters
+  useEffect(() => {
+    const aiName = searchParams.get('aiSuggestionName');
+    const aiDescription = searchParams.get('aiSuggestionDescription');
+    const aiIngredientsStr = searchParams.get('aiSuggestionIngredients');
+    const aiOverview = searchParams.get('aiSuggestionOverview');
+    const aiCalories = searchParams.get('aiSuggestionCalories');
+    const aiProtein = searchParams.get('aiSuggestionProtein');
+    const aiFat = searchParams.get('aiSuggestionFat');
+    const aiCarbs = searchParams.get('aiSuggestionCarbs');
+    const aiMealTime = searchParams.get('aiSuggestionMealTime');
+    const aiMealDate = searchParams.get('aiSuggestionDate');
+
+    let initialDescription = aiDescription || '';
+    let initialInstructions: Instruction[] = [];
+
+    if (aiOverview) {
+      // Simple split by period, question mark, or exclamation mark followed by space, or newline
+      const overviewSentences = aiOverview.split(/(?<=[.?!])\s+|\n/).filter(s => s.trim() !== '');
+      initialInstructions = overviewSentences.map((sentence, index) => ({
+        step: index + 1,
+        content: sentence.trim(),
+      }));
+      // Optionally, append overview to description if not using it for instructions or if it's very brief
+      // initialDescription = `${initialDescription}${initialDescription ? \' \' : \'\'}烹饪概要: ${aiOverview}`;
+    }
+
+    const initialIngredients: Ingredient[] = aiIngredientsStr
+      ? aiIngredientsStr.split(',').map(name => ({ name: name.trim(), quantity: '适量' })) // Default quantity
+      : [];
+
+    const initialNutrition: ExtendedNutritionInfo = {};
+    if (aiCalories) initialNutrition.calories = Number(aiCalories);
+    if (aiProtein) initialNutrition.protein = Number(aiProtein);
+    if (aiFat) initialNutrition.fat = Number(aiFat);
+    if (aiCarbs) initialNutrition.carbs = Number(aiCarbs);
+    
+    // Only update if there are AI parameters to avoid overwriting user input on navigation within the page
+    if (aiName || aiDescription || aiIngredientsStr || aiOverview || Object.keys(initialNutrition).length > 0) {
+      setFormData(prev => ({
+        ...prev,
+        title: aiName || prev.title,
+        description: initialDescription || prev.description,
+        ingredients: initialIngredients.length > 0 ? initialIngredients : prev.ingredients,
+        instructions: initialInstructions.length > 0 ? initialInstructions : prev.instructions,
+        nutritionInfo: Object.keys(initialNutrition).length > 0 ? initialNutrition : prev.nutritionInfo,
+        aiSuggestedMealTime: aiMealTime || prev.aiSuggestedMealTime,
+        aiSuggestedMealDate: aiMealDate || prev.aiSuggestedMealDate,
+      }));
+    }
+  }, [searchParams]); // Re-run if searchParams change
 
   const handleBasicInfoChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -170,7 +226,7 @@ export default function CreateRecipePage() {
   /**
    * 向上或向下移动列表中的指令步骤。
    * @param index - 要移动的指令的当前索引。
-   * @param direction - 移动指令的方向（“up”或“down”）。
+   * @param direction - 移动指令的方向（"up"或"down"）。
    */
   const moveInstruction = (index: number, direction: "up" | "down") => {
     if ((direction === "up" && index === 0) || (direction === "down" && index === formData.instructions.length - 1)) {
@@ -342,65 +398,70 @@ export default function CreateRecipePage() {
     setIsLoading(true)
     setError(null)
 
-    // Validate form data
+    // Basic validation
     if (!formData.title.trim()) {
-      setError("请输入食谱标题")
+      setError("食谱标题不能为空")
+      setActiveTab("basic")
       setIsLoading(false)
       return
     }
-
     if (formData.ingredients.length === 0) {
-      setError("请至少添加一种食材")
+      setError("至少需要一个食材")
+      setActiveTab("ingredients")
       setIsLoading(false)
       return
     }
-
     if (formData.instructions.length === 0) {
-      setError("请至少添加一个步骤")
-      setIsLoading(false)
-      return
-    }
-
-    if (formData.categoryIds.length === 0) {
-      setError("请至少选择一个分类")
+      setError("至少需要一个步骤")
+      setActiveTab("instructions")
       setIsLoading(false)
       return
     }
 
     try {
-      // Create FormData object
-      const formDataObj = new FormData()
-      formDataObj.append("title", formData.title)
-      formDataObj.append("description", formData.description)
-      formDataObj.append("cookingTime", formData.cookingTime.toString())
-      formDataObj.append("servings", formData.servings.toString())
-      formDataObj.append("difficulty", formData.difficulty)
-      formDataObj.append("ingredients", JSON.stringify(formData.ingredients))
-      formDataObj.append("instructions", JSON.stringify(formData.instructions))
-      formDataObj.append("nutritionInfo", JSON.stringify(formData.nutritionInfo))
-      formData.categoryIds.forEach((id) => formDataObj.append("categoryIds", id))
-      formData.tagIds.forEach((id) => formDataObj.append("tagIds", id))
-
-      if (coverImage) {
-        formDataObj.append("coverImage", coverImage)
+      const recipeToCreate = {
+        ...formData,
+        coverImage,
+        // Ensure numbers are numbers
+        cookingTime: Number(formData.cookingTime) || 0,
+        servings: Number(formData.servings) || 0,
+        // Ensure nutritionInfo values are numbers
+        nutritionInfo: Object.fromEntries(
+          Object.entries(formData.nutritionInfo).map(([key, value]) => [key, Number(value) || 0])
+        ) as NutritionInfo,
       }
 
-      const result = await createRecipe(formDataObj)
+      console.log("Submitting recipe:", recipeToCreate)
+      // Here you would typically make an API call
+      // const newRecipe = await api.createRecipe(recipeToCreate);
 
-      if (result.error) {
-        setError(result.error)
-        setIsLoading(false)
-        return
-      }
+      // Simulating API call
+      // await new Promise(resolve => setTimeout(resolve, 1000));
+      // const newRecipeId = Date.now().toString();
 
-      // Redirect to recipe page
-      // 确保 result.recipe 存在再进行跳转
-      if (result && "recipe" in result && result.recipe) {
-        router.push(`/recipes/${result.recipe.id}`)
+      const result = await createRecipe(recipeToCreate)
+
+      if (result.success && result.data) {
+        toast.success(\`食谱 "${result.data.title}" 创建成功!\`)
+        // router.push(`/recipes/${result.data.id}`) // Original navigation
+
+        if (formData.aiSuggestedMealDate && formData.aiSuggestedMealTime) {
+          const redirectUrl = `/meal-plans?newRecipeId=${result.data.id}&targetDate=${formData.aiSuggestedMealDate}&targetMealTime=${formData.aiSuggestedMealTime}`;
+          router.push(redirectUrl);
+        } else {
+          router.push(`/recipes/${result.data.id}`);
+        }
+
+      } else {
+        setError(result.error || "创建食谱失败，请稍后重试。")
+        toast.error(result.error || "创建食谱失败，请稍后重试。")
       }
-    } catch (error) {
-      console.error("Error creating recipe:", error)
-      setError("创建食谱失败，请稍后再试")
+    } catch (err) {
+      console.error("创建食谱时出错:", err)
+      const errorMessage = err instanceof Error ? err.message : "发生未知错误"
+      setError(errorMessage)
+      toast.error(errorMessage)
+    } finally {
       setIsLoading(false)
     }
   }

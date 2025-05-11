@@ -29,6 +29,7 @@ interface MealPlanState {
   clearItems: () => void
   setIsLoading: (isLoading: boolean) => void
   setError: (error: string | null) => void
+  loadMealPlanItems: (items: MealPlanItem[]) => void
 }
 
 // Helper to ensure a Date object is always a Date object (e.g., after JSON stringify/parse)
@@ -71,6 +72,7 @@ export const useMealPlanStore = create<MealPlanState>()(
       clearItems: () => set({ items: [] }),
       setIsLoading: (isLoading) => set({ isLoading }),
       setError: (error) => set({ error }),
+      loadMealPlanItems: (newItems) => set({ items: newItems }),
     }),
     {
       name: "meal-plan-storage",

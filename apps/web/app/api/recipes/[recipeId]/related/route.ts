@@ -3,9 +3,9 @@ import { prisma } from "@/lib/prisma";
 
 export async function GET(
   request: NextRequest,
-  { params }: { params: { id: string } }
+  { params }: { params: { recipeId: string } }
 ) {
-  const currentRecipeId = params.id;
+  const currentRecipeId = params.recipeId;
   const limit = parseInt(request.nextUrl.searchParams.get("limit") || "3"); // Default to 3 related recipes
 
   try {
