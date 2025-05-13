@@ -1,7 +1,7 @@
 "use client"
 
 import { useState, useEffect } from "react"
-import { signIn } from "next-auth/react"
+import { signIn, useSession } from "next-auth/react"
 import { useRouter, useSearchParams } from "next/navigation"
 import { Button } from "@repo/ui/button"
 import { Input } from "@repo/ui/input"
@@ -19,15 +19,31 @@ export default function LoginPage() {
   const [error, setError] = useState<string | null>(null)
   const [infoMessage, setInfoMessage] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const { data: session, status } = useSession()
 
+  // 检测登录成功后立即重定向到原始请求的URL
   useEffect(() => {
-    const from = searchParams.get("from")
-    if (from === "middleware" && callbackUrl.includes("meal-plans")) {
-      setInfoMessage("请登录以访问您的周计划和更多个性化功能。")
-    } else if (from === "middleware") {
-      setInfoMessage("请登录以继续访问受保护的内容。")
+    if (status === "authenticated" && callbackUrl) {
+      console.log("认证成功，重定向到:", callbackUrl)
+      router.push(callbackUrl)
     }
-  }, [searchParams, callbackUrl])
+  }, [status, router, callbackUrl])
+
+  // 处理来自中间件的重定向并显示适当的消息
+  useEffect(() => {
+    if (callbackUrl && callbackUrl !== "/profile") {
+      const path = callbackUrl.split("?")[0]
+      if (path.includes("meal-plans")) {
+        setInfoMessage("请登录以访问您的周计划和更多个性化功能。")
+      } else if (path.includes("recipes/create")) {
+        setInfoMessage("请登录以创建您自己的食谱。")
+      } else if (path.includes("shopping-list")) {
+        setInfoMessage("请登录以访问您的购物清单。")
+      } else {
+        setInfoMessage("请登录以继续访问受保护的内容。")
+      }
+    }
+  }, [callbackUrl])
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
@@ -38,21 +54,22 @@ export default function LoginPage() {
       const result = await signIn("credentials", {
         email: email,
         password: password,
-        callbackUrl: callbackUrl,
+        redirect: false,
+        callbackUrl: callbackUrl, // 确保传递回调URL
       })
 
       if (result?.error) {
         setError("登录失败: " + (result.error === "CredentialsSignin" ? "无效的邮箱或密码。" : result.error))
         setIsLoading(false)
-      } else if (result && !result.ok && !result.error) {
+      } else if (!result?.ok) {
         setError("登录未能成功，请检查您的凭据或网络连接。")
         setIsLoading(false)
-      } else if (!result) {
-        setError("登录过程中发生意外错误，请稍后重试。")
-        setIsLoading(false)
+      } else {
+        // 登录成功 - 不手动重定向，让 useEffect 监听状态变化处理重定向
+        console.log("登录成功，等待会话更新自动重定向")
       }
     } catch (err) {
-      console.error("Login submission error", err)
+      console.error("登录提交错误", err)
       setError("登录过程中发生错误。")
       setIsLoading(false)
     }
@@ -104,7 +121,7 @@ export default function LoginPage() {
                 {error}
               </p>
             )}
-            <Button type="submit" className="w-full" disabled={isLoading}>
+            <Button type="submit" className="w-full" disabled={isLoading || status === "loading"}>
               {isLoading ? "登录中..." : "登录"}
             </Button>
           </form>

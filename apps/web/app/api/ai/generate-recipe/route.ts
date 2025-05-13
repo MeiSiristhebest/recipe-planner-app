@@ -1,5 +1,5 @@
 // apps/web/app/api/ai/generate-recipe/route.ts
-import { NextResponse } from 'next/server';
+import { NextResponse } from "next/server";
 
 /**
  * 处理生成菜谱的POST请求
@@ -11,63 +11,117 @@ export async function POST(request: Request) {
     const { prompt } = await request.json();
 
     if (!prompt) {
-      return NextResponse.json({ error: 'Prompt is required' }, { status: 400 });
+      return NextResponse.json(
+        { error: "Prompt is required" },
+        { status: 400 }
+      );
     }
 
+    // 获取API密钥
     const apiKey = process.env.ARK_API_KEY;
     if (!apiKey) {
-      console.error('ARK_API_KEY is not set in environment variables');
-      return NextResponse.json({ error: 'API key is not configured. Please contact the administrator.' }, { status: 500 });
+      console.error("ARK_API_KEY is not set in environment variables");
+      return NextResponse.json(
+        {
+          error: "API key is not configured. Please contact the administrator.",
+        },
+        { status: 500 }
+      );
     }
 
-    const arkApiUrl = 'https://ark.cn-beijing.volces.com/api/v3/chat/completions';
+    // 火山方舟API端点
+    const arkApiUrl =
+      "https://ark.cn-beijing.volces.com/api/v3/chat/completions";
 
+    // 构建请求体
     const requestBody = {
       messages: [
         {
-          content: 'You are a helpful assistant that generates creative and delicious recipes based on user prompts.',
-          role: 'system',
+          content:
+            "你是一个专业的厨师，擅长创建美味的食谱。请根据用户的要求生成详细的食谱，包括材料清单和步骤说明。",
+          role: "system",
         },
         {
-          content: `Generate a recipe based on the following: ${prompt}`,
-          role: 'user',
+          content: `请为我生成一道${prompt}的详细食谱，包括所需材料和详细步骤。`,
+          role: "user",
         },
       ],
-      model: 'doubao-pro-32k', // 使用文档中指定的模型，或者用户提供的 doubao-1-5-pro-32k-250115，这里暂时用一个通用模型名
-      stream: false, // 根据用户需求，这里设置为false以获取完整响应，如果需要流式，则改为true并相应处理
+      // 使用火山方舟支持的模型
+      model: "doubao-1-5-thinking-pro-250415",
+      stream: false,
     };
 
+    console.log(
+      "Using API Key:",
+      apiKey.substring(0, 5) + "..." + apiKey.substring(apiKey.length - 5)
+    );
+    console.log("Request Body:", JSON.stringify(requestBody));
+
+    // 调用火山方舟API
     const response = await fetch(arkApiUrl, {
-      method: 'POST',
+      method: "POST",
       headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${apiKey}`,
       },
       body: JSON.stringify(requestBody),
     });
 
+    // 处理API响应
     if (!response.ok) {
       const errorBody = await response.text();
-      console.error('Error from Ark API:', response.status, errorBody);
-      return NextResponse.json({ error: `Failed to generate recipe. API Error: ${response.statusText}`, details: errorBody }, { status: response.status });
+      console.error("Error from Ark API:", response.status, errorBody);
+      return NextResponse.json(
+        {
+          error: `Failed to generate recipe. API Error: ${response.statusText}`,
+          details: errorBody,
+        },
+        { status: response.status }
+      );
     }
 
+    // 解析API响应
     const data = await response.json();
+    console.log(
+      "API Response:",
+      JSON.stringify(data).substring(0, 200) + "..."
+    );
 
-    // 假设API成功时，响应体中 choices[0].message.content 包含生成的文本
-    // 请根据实际API响应结构调整
-    if (data.choices && data.choices.length > 0 && data.choices[0].message && data.choices[0].message.content) {
-      return NextResponse.json({ recipe: data.choices[0].message.content });
+    // 从API响应中提取生成的食谱
+    if (
+      data.choices &&
+      data.choices.length > 0 &&
+      data.choices[0].message &&
+      data.choices[0].message.content
+    ) {
+      // 获取原始内容
+      const recipeContent = data.choices[0].message.content;
+
+      // 确保正确处理中文字符
+      return new NextResponse(JSON.stringify({ recipe: recipeContent }), {
+        status: 200,
+        headers: {
+          "Content-Type": "application/json; charset=utf-8",
+        },
+      });
     } else {
-      console.error('Unexpected response structure from Ark API:', data);
-      return NextResponse.json({ error: 'Failed to parse recipe from API response', details: data }, { status: 500 });
+      console.error("Unexpected response structure from Ark API:", data);
+      return NextResponse.json(
+        { error: "Failed to parse recipe from API response", details: data },
+        { status: 500 }
+      );
     }
-
   } catch (error) {
-    console.error('Error in generate-recipe API:', error);
+    console.error("Error in generate-recipe API:", error);
     if (error instanceof Error) {
-        return NextResponse.json({ error: 'Internal Server Error', details: error.message }, { status: 500 });
+      return NextResponse.json(
+        { error: "Internal Server Error", details: error.message },
+        { status: 500 }
+      );
     }
-    return NextResponse.json({ error: 'Internal Server Error', details: 'An unknown error occurred' }, { status: 500 });
+    return NextResponse.json(
+      { error: "Internal Server Error", details: "An unknown error occurred" },
+      { status: 500 }
+    );
   }
 }

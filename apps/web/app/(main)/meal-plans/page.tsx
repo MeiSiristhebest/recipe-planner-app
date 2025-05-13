@@ -3,7 +3,8 @@
 import React from "react"
 
 import { useState, useEffect } from "react"
-import { useQuery } from "@tanstack/react-query"
+import { AuthGuard } from "@/components/shared/auth-guard"
+import { useQuery, useQueryClient } from "@tanstack/react-query"
 import {
   DndContext,
   DragOverlay,
@@ -22,13 +23,14 @@ import { RecipeSidebar } from "@/components/features/meal-plans/recipe-sidebar"
 import { RecipeSearchModal } from "@/components/features/meal-plans/recipe-search-modal"
 import { TemplateModal } from "@/components/features/meal-plans/template-modal"
 import { AISuggestMealModal, type SuggestedMeal } from "@/components/features/meal-plans/ai-suggest-meal-modal"
-import { useMealPlanStore, type DayOfWeek, type MealTime, type MealPlanItem, type FullMealPlanItem } from "@/store/meal-plan-store"
-import { addDays, formatISO, parseISO, startOfDay, format } from "date-fns"
-import type { Recipe, MealPlan } from "@recipe-planner/types"
+import { useMealPlanStore, type DayOfWeek, type MealTime, type MealPlanItem as StoreMealPlanItem } from "@/store/meal-plan-store"
+import { addDays, formatISO, parseISO, startOfDay, format, startOfWeek, endOfWeek } from "date-fns"
+import type { Recipe, MealPlan, MealPlanItem as PrismaMealPlanItem } from "@recipe-planner/types"
 import { toast } from "sonner"
 import { RecipeApiOutputSchema, type ValidatedRecipeApiResponse } from "@/lib/validators"
 import { useRouter, useSearchParams } from 'next/navigation'
 import { useSession } from "next-auth/react"
+import { saveMealPlan } from "@/app/api/meal-plans/actions"
 
 const DAYS: DayOfWeek[] = ["周一", "周二", "周三", "周四", "周五", "周六", "周日"]
 const MEAL_TIMES: MealTime[] = ["早餐", "午餐", "晚餐"]
@@ -100,7 +102,26 @@ async function fetchCurrentMealPlan(weekStart: Date): Promise<MealPlan | null> {
   return response.json();
 }
 
+// API function to fetch meal plan templates
+async function fetchMealPlanTemplates(): Promise<MealPlan[]> {
+  const response = await fetch('/api/meal-plans/templates');
+  if (!response.ok) {
+    if (response.status === 404) return []; 
+    const errorData = await response.json().catch(() => ({ message: 'Failed to fetch templates and could not parse error' }));
+    throw new Error(errorData.message || `Failed to fetch templates. Status: ${response.status}`);
+  }
+  return response.json();
+}
+
 export default function MealPlansPage() {
+  return (
+    <AuthGuard>
+      <MealPlansContent />
+    </AuthGuard>
+  )
+}
+
+function MealPlansContent() {
   const {
     currentWeekStart,
     items,
@@ -126,16 +147,18 @@ export default function MealPlansPage() {
   const [currentMealContext, setCurrentMealContext] = useState<{ date: Date; mealTime: string } | null>(null)
 
   const [searchResults, setSearchResults] = useState<Recipe[]>([])
-  const [templates, setTemplates] = useState<
-    Array<{
-      id: string
-      name: string
-      items: typeof items
-    }>
-  >([])
+  const queryClient = useQueryClient(); // 获取 queryClient 实例
 
   const router = useRouter()
   const searchParams = useSearchParams() // Initialize useSearchParams
+
+  // 初始化为当前日期周
+  useEffect(() => {
+    // 设置当前日期所在的周一
+    const today = new Date();
+    const currentMonday = startOfWeek(today, { weekStartsOn: 1 });
+    setCurrentWeekStart(currentMonday);
+  }, [setCurrentWeekStart]);
 
   // Fetch current meal plan
   const { 
@@ -148,20 +171,6 @@ export default function MealPlansPage() {
     queryKey: ["currentMealPlan", format(currentWeekStart, 'yyyy-MM-dd')], // Include weekStart in key
     queryFn: () => fetchCurrentMealPlan(currentWeekStart),
     enabled: isAuthenticated,
-    // onSuccess: (data) => {
-    //   // This will be handled in a useEffect below to also manage empty/null data
-    //   if (data && data.items) {
-    //     // Transform API items to store items if necessary, then:
-    //     // setItems(data.items as FullMealPlanItem[]); // TODO: Adjust based on actual types
-    //   } else {
-    //     // setItems([]); // Clear items if no plan or empty plan
-    //   }
-    // },
-    // onError: (err) => {
-    //   // Also handled in useEffect or directly in render
-    //   // setItems([]); // Clear items on error
-    //   // toast.error(`加载周计划失败: ${(err as Error).message}`);
-    // }
   });
 
   // Fetch favorite recipes
@@ -188,19 +197,27 @@ export default function MealPlansPage() {
     }
   }, [recipesData, favoriteRecipesData, recentRecipesData, isLoadingFavorites, isLoadingRecent, setSidebarRecipes])
 
-  // Effect to load meal plan items into the store once fetched
+  // Effect to load meal plan items into the store once fetched (for current plan)
   useEffect(() => {
-    if (isAuthenticated && currentMealPlanData) {
-      // Assuming currentMealPlanData.items are compatible with FullMealPlanItem
-      // or need transformation. For now, direct cast.
-      // The API returns items with full recipe objects based on its include.
-      loadMealPlanItems(currentMealPlanData.items as MealPlanItem[] || []);
+    if (isAuthenticated && currentMealPlanData && currentMealPlanData.items) {
+      // --- CONVERSION NEEDED --- 
+      // API returns PrismaMealPlanItem[], store uses StoreMealPlanItem[]
+      const itemsForStore = currentMealPlanData.items.map((item: PrismaMealPlanItem) => {
+          // Calculate DayOfWeek from Date
+          const date = new Date(item.date);
+          const dayIndex = date.getDay(); // 0 for Sunday, 1 for Monday, etc.
+          const dayOfWeek = DAYS[dayIndex === 0 ? 6 : dayIndex - 1] as DayOfWeek;
+          return {
+              ...item,
+              day: dayOfWeek,
+              // Ensure recipe is included, even if partial from API
+              recipe: item.recipe as Recipe // Cast needed, ensure fields align or fetch full recipe
+          } as StoreMealPlanItem; // Cast to the store's type
+      });
+      loadMealPlanItems(itemsForStore || []);
     } else if (isAuthenticated && !isLoadingCurrentMealPlan && (isErrorCurrentMealPlan || !currentMealPlanData)) {
-      // If there's an error, or no data (even if not technically an error, e.g. 404 handled as null)
-      // ensure the store is cleared for the current user's view.
       loadMealPlanItems([]);
     }
-    // Do not clear if not authenticated, as store might be in a default state or for guest preview (if any)
   }, [currentMealPlanData, isLoadingCurrentMealPlan, isErrorCurrentMealPlan, isAuthenticated, loadMealPlanItems]);
 
   // Effect to handle new recipe added from create page
@@ -341,45 +358,102 @@ export default function MealPlansPage() {
   // Changed from handleAddRecipe to handleAddRecipes to accept multiple recipes
   const handleAddRecipes = (recipes: Recipe[], day: DayOfWeek, mealTime: MealTime) => {
     recipes.forEach(recipe => {
-      addItem({
-        recipeId: recipe.id,
-        recipe,
-        day,
-        mealTime,
+    addItem({
+      recipeId: recipe.id,
+      recipe,
+      day,
+      mealTime,
         servings: 1, // Default servings, can be adjusted later if needed
-      })
+    })
     });
     setSearchModalOpen(false) // Close modal after adding recipes
     setSelectedCell(null)
   }
 
   const handleOpenAddModal = (day: DayOfWeek, mealTime: MealTime) => {
-    setSelectedCell({ day, mealTime })
+    const date = getDateForDay(day); // Calculate date
+    setSelectedCell({ day, mealTime, date }); // Include date
     setSearchModalOpen(true)
   }
 
-  const handleSaveTemplate = (name: string) => {
-    // In a real app, this would be an API call
-    const newTemplate = {
-      id: Math.random().toString(36).substring(2, 15),
-      name,
-      items,
+  const handleSaveTemplate = async (name: string) => {
+    const currentItems = useMealPlanStore.getState().items;
+
+    const itemsForApi = currentItems.map(item => {
+        if (!item.recipe || !item.recipe.id) {
+            console.error("Skipping item due to missing recipe data:", item);
+            toast.error(`无法保存模板，项目 ${item.day} ${item.mealTime} 缺少食谱信息。`);
+            return null;
+        }
+        // Calculate the date based on the currentWeekStart and the item's day
+        const itemDate = getDateForDay(item.day); 
+        return {
+            recipeId: item.recipe.id,
+            date: itemDate, // Use the calculated date
+            mealTime: item.mealTime,
+            servings: item.servings,
+        };
+    }).filter(item => item !== null) as { recipeId: string; date: Date; mealTime: string; servings: number; }[]; // Assert non-null type
+
+    if (itemsForApi.length !== currentItems.length) {
+      return; // Stop if any item had missing data
     }
-    setTemplates([...templates, newTemplate])
-  }
+
+    const templateData = {
+        name: name,
+        startDate: startOfWeek(currentWeekStart, { weekStartsOn: 1 }),
+        endDate: endOfWeek(currentWeekStart, { weekStartsOn: 1 }),
+        isTemplate: true,
+        items: itemsForApi,
+    };
+
+    try {
+        // Call the Server Action (which now accepts an object)
+        const result = await saveMealPlan(templateData);
+
+        if (result.error) {
+            console.error("Failed to save template:", result.error, result.fieldErrors);
+            toast.error(`保存模板失败: ${result.error}`);
+        } else {
+            toast.success(`模板 "${name}" 保存成功!`);
+            await queryClient.invalidateQueries({ queryKey: ['mealPlanTemplates'] });
+        }
+    } catch (error) {
+        console.error("Error calling saveMealPlan action:", error);
+        toast.error("保存模板时发生意外错误。", { description: (error as Error)?.message });
+    }
+     setTemplateModalOpen(false);
+  };
 
   const handleLoadTemplate = (templateId: string) => {
-    // In a real app, this would be an API call
-    const template = templates.find((t) => t.id === templateId)
+    const template = templates.find((t) => t.id === templateId);
     if (template) {
-      // Clear current items and add template items
-      useMealPlanStore.getState().clearItems()
-      template.items.forEach((item) => {
-        addItem(item)
-      })
+      if (template.items) {
+          // --- CONVERSION NEEDED --- 
+          // API returns PrismaMealPlanItem[], store uses StoreMealPlanItem[]
+          const itemsForStore = template.items.map((item: PrismaMealPlanItem) => {
+              const date = new Date(item.date);
+              const dayIndex = date.getDay();
+              const dayOfWeek = DAYS[dayIndex === 0 ? 6 : dayIndex - 1] as DayOfWeek;
+              return {
+                  ...item, // Spread properties from Prisma item
+                  day: dayOfWeek,
+                  // Ensure the recipe object (even partial) is passed
+                  recipe: item.recipe as Recipe // Cast needed
+              } as StoreMealPlanItem;
+          });
+          loadMealPlanItems(itemsForStore || []); 
+          toast.success(`模板 "${template.name}" 已加载。`);
+      } else {
+          console.info("Selected template has no items:", template); // Use info
+          toast.info("所选模板为空。") // Use info instead of warn
+          loadMealPlanItems([]);
+      }
+    } else {
+        toast.error("找不到所选模板。可能列表尚未更新。");
     }
-    setTemplateModalOpen(false)
-  }
+    setTemplateModalOpen(false);
+  };
 
   const previousWeek = () => {
     const newDate = new Date(currentWeekStart)
@@ -432,9 +506,9 @@ export default function MealPlansPage() {
 
     if (suggestion.suggestionType === "existing_recipe" && suggestion.recipeId) {
       // Attempt to find the recipe in existing client-side lists first
-      let recipeToAdd = sidebarRecipes.find(r => r.id === suggestion.recipeId) || 
-                        favoriteRecipesData.find(r => r.id === suggestion.recipeId) || 
-                        recentRecipesData.find(r => r.id === suggestion.recipeId)
+      let recipeToAdd = (sidebarRecipes || []).find(r => r.id === suggestion.recipeId) || 
+                        (favoriteRecipesData || []).find(r => r.id === suggestion.recipeId) || 
+                        (recentRecipesData || []).find(r => r.id === suggestion.recipeId);
       
       if (!recipeToAdd) {
         // If not found, ideally fetch from API. For now, log and show a message.
@@ -499,7 +573,7 @@ export default function MealPlansPage() {
     handleCloseAISuggestModal()
   }
 
-  const handleNewIdeaSelectedFromAI = (idea: SuggestedMeal, context: { date: Date; mealTime: MealTime }) => {
+  const handleNewIdeaSelectedFromAI = (idea: SuggestedMeal, context: { date: Date; mealTime: string }) => {
     console.log("New AI Idea selected:", idea, "Context:", context);
     // Navigate to recipe creation page with AI idea data as query params
     const queryParams = new URLSearchParams();
@@ -514,18 +588,57 @@ export default function MealPlansPage() {
     if (idea.estimatedNutrition?.fat) queryParams.append('aiSuggestionFat', String(idea.estimatedNutrition.fat));
     if (idea.estimatedNutrition?.carbs) queryParams.append('aiSuggestionCarbs', String(idea.estimatedNutrition.carbs));
     // Potentially pass mealTime and date if the create page can use them to auto-add to plan after creation
-    queryParams.append('aiSuggestionMealTime', context.mealTime);
+    queryParams.append('aiSuggestionMealTime', context.mealTime); // Keep as string
     queryParams.append('aiSuggestionDate', formatISO(context.date, { representation: 'date' }));
 
     router.push(`/recipes/create?${queryParams.toString()}`);
     setIsAISuggestModalOpen(false); // Close the AI modal
   };
 
-  // Pass the correct data to RecipeSidebar
-  // The sidebar component itself will need to handle displaying these lists under "我的收藏" and "最近浏览" tabs
-  const sidebarFavoriteRecipes = favoriteRecipesData || [];
-  const sidebarRecentRecipes = recentRecipesData || [];
-  // sidebarRecipes from useMealPlanStore can be used for a general "食谱库" tab or initial display if needed
+  // Fetch meal plan templates (defined earlier)
+  const { 
+    data: templatesData, 
+    isLoading: isLoadingTemplates, 
+    refetch: fetchAndSetTemplates 
+  } = useQuery<MealPlan[]>({ 
+      queryKey: ['mealPlanTemplates'],
+      queryFn: fetchMealPlanTemplates,
+      enabled: isAuthenticated,
+      initialData: [], 
+  });
+
+  // Define templates *after* fetching data
+  const templates = templatesData || [];
+
+  // Ensure sidebar data are arrays
+  const sidebarFavoriteRecipes: Recipe[] = favoriteRecipesData || []; // Explicitly type and ensure array
+  const sidebarRecentRecipes: Recipe[] = recentRecipesData || []; // Explicitly type and ensure array
+
+  // Prepare templates for the TemplateModal, ensuring name is a string and items are converted
+  const templatesForModal = templates.map(t => {
+      const itemsForStore = (t.items || []).map((item: PrismaMealPlanItem) => {
+        const date = new Date(item.date);
+        const dayIndex = date.getDay();
+        const dayOfWeek = DAYS[dayIndex === 0 ? 6 : dayIndex - 1] as DayOfWeek;
+        return {
+            ...item,
+            day: dayOfWeek,
+            recipe: item.recipe as Recipe 
+        } as StoreMealPlanItem;
+      });
+      return {
+          id: t.id,
+          name: t.name || `未命名模板 ${t.id.substring(0, 4)}`, 
+          items: itemsForStore // Use the converted items
+      };
+  });
+
+  // Dummy search handler for RecipeSidebar
+  const handleSidebarSearch = (query: string) => {
+    console.log("Sidebar search triggered with query:", query);
+    // Implement actual search logic here if needed, 
+    // e.g., filter sidebarRecipes or call an API
+  };
 
   return (
     <div className="container py-8">
@@ -547,13 +660,9 @@ export default function MealPlansPage() {
         {/* Sidebar */}
         <div className="lg:col-span-1">
           <RecipeSidebar
-            favoriteRecipes={sidebarFavoriteRecipes}
-            recentRecipes={sidebarRecentRecipes}
-            allRecipes={sidebarRecipes}
-            isLoadingFavorites={isLoadingFavorites}
-            isLoadingRecent={isLoadingRecent}
-            isLoadingAll={isLoadingGeneralRecipes}
-            onRecipeClick={(recipe, source) => { /* Handle recipe click if needed */ }}
+            favoriteRecipes={favoriteRecipesData || []} 
+            recentRecipes={recentRecipesData || []}
+            onSearch={handleSidebarSearch} 
           />
         </div>
 
@@ -607,15 +716,15 @@ export default function MealPlansPage() {
                             <div className="flex flex-col h-full p-2">
                               <div className="flex-grow space-y-1 overflow-y-auto">
                                 {cellItems.length > 0 ? (
-                                  cellItems.map((planItem: FullMealPlanItem) => ( // Use FullMealPlanItem here
+                                  cellItems.map((planItem: StoreMealPlanItem) => (
                                     <DraggableRecipe 
                                       key={planItem.id} 
                                       id={planItem.id!} 
-                                      recipe={planItem.recipe} // Assumes recipe is populated
+                                      recipe={planItem.recipe}
                                       onRemove={() => removeItem(planItem.id!)}
                                     />
-                                  ))
-                                ) : (
+                                ))
+                            ) : (
                                   <div className="flex-grow flex items-center justify-center text-xs text-muted-foreground">
                                     空
                                   </div>
@@ -678,7 +787,22 @@ export default function MealPlansPage() {
               <Trash2 className="h-4 w-4" />
               清空本周计划
             </Button>
-            <Button variant="secondary" className="ml-auto">
+            <Button 
+              variant="secondary" 
+              className="ml-auto"
+              onClick={() => {
+                // Get all recipes from current meal plan
+                const mealPlanItems = useMealPlanStore.getState().items;
+                if (mealPlanItems.length === 0) {
+                  toast.info("当前周计划中没有食谱，无法生成购物清单。");
+                  return;
+                }
+                
+                // Navigate to shopping list page 
+                router.push('/shopping-list?source=mealplan');
+                toast.success("已生成本周计划的购物清单。");
+              }}
+            >
               生成购物清单
             </Button>
           </div>
@@ -708,18 +832,18 @@ export default function MealPlansPage() {
       <TemplateModal
         isOpen={templateModalOpen}
         onClose={() => setTemplateModalOpen(false)}
+        mode={templateMode}
+        templates={templatesForModal} 
         onSave={handleSaveTemplate}
         onLoad={handleLoadTemplate}
-        templates={templates}
-        mode={templateMode}
       />
 
       <AISuggestMealModal
         isOpen={isAISuggestModalOpen}
         onClose={handleCloseAISuggestModal}
-        currentMealContext={currentMealContext}
+        currentMealContext={currentMealContext} 
         onMealSuggested={handleMealSuggestedFromAI}
-        onNewIdeaSelected={handleNewIdeaSelectedFromAI}
+        onNewIdeaSelected={handleNewIdeaSelectedFromAI} 
       />
     </div>
   )

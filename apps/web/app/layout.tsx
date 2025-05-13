@@ -1,41 +1,47 @@
-import type React from "react"
-import { ThemeProvider } from "@/components/theme-provider"
-import { AuthProvider } from "@/components/providers/auth-provider"
-import { Header } from "@/components/shared/header"
-import { Footer } from "@/components/shared/footer"
+// import "@/styles/globals.css"
 import "./globals.css"
-import "nprogress/nprogress.css";
+import { Inter } from "next/font/google"
+import { Metadata } from "next"
+import { AuthProvider } from "@/components/providers/auth-provider"
 import { QueryProvider } from "@/components/providers/query-provider"
-import { Toaster } from "sonner"
+// import { Toaster } from "@repo/ui/toaster"
 import { NavigationEvents } from "@/components/shared/navigation-events"
+import { auth } from "@/lib/auth"
+import { Toaster } from "sonner"
+import { Header } from "@/components/shared/header"
+import { Footer } from "@/components/shared/footer" 
 
-// 使用系统默认字体
-const systemFontFamily = '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", "PingFang SC", "Microsoft YaHei", "微软雅黑", Arial, sans-serif'
+const fontInter = Inter({ subsets: ["latin"] })
 
-export const metadata = {
-  title: "食谱规划助手 | Recipe Planner",
-  description: "探索美味食谱，规划健康生活，轻松查找、分享、计划你的每一餐",
+export const metadata: Metadata = {
+  title: "食谱规划师",
+  description: "食谱规划师 - 轻松管理您的食谱和周餐计划",
 }
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  // 获取服务端会话以传递给客户端 AuthProvider
+  const session = await auth()
+
   return (
-    <html lang="zh-CN" suppressHydrationWarning>
-      <body className="min-h-screen flex flex-col">
-        <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-          <AuthProvider>
+    <html lang="zh-CN">
+      <body className={fontInter.className}>
+        <AuthProvider session={session}>
           <QueryProvider>
-            <Header />
-            <main className="flex-grow">{children}</main>
-            <Footer />
             <Toaster richColors position="top-right" />
             <NavigationEvents />
+            <div className="flex min-h-screen flex-col">
+              <Header />
+              <main className="flex-1">
+                {children}
+              </main>
+              <Footer />
+            </div>
           </QueryProvider>
-          </AuthProvider>
-        </ThemeProvider>
+        </AuthProvider>
       </body>
     </html>
   )

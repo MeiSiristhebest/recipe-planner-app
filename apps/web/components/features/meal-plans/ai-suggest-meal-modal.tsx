@@ -131,12 +131,30 @@ export function AISuggestMealModal({
   const suggestMealMutation = useMutation<SuggestedMeal[], Error, AISuggestionFormData>({
     mutationFn: (data) => {
       if (!currentMealContext) throw new Error('缺少膳食上下文信息');
+
+      // Map Chinese mealTime to English lowercase enum values
+      let apiMealTime: 'breakfast' | 'lunch' | 'dinner' | 'snack' = 'snack'; // default
+      switch (currentMealContext.mealTime) {
+        case '早餐':
+          apiMealTime = 'breakfast';
+          break;
+        case '午餐':
+          apiMealTime = 'lunch';
+          break;
+        case '晚餐':
+          apiMealTime = 'dinner';
+          break;
+        // Add other meal times if necessary, like '加餐' -> 'snack'
+      }
+
       const payload = {
         ...data,
-        mealTime: currentMealContext.mealTime.toLowerCase(), // Ensure mealTime is lowercase enum
+        mealTime: apiMealTime, // Use mapped English mealTime
         targetDate: currentMealContext.date.toISOString().split('T')[0], // Format date to YYYY-MM-DD
         calorieTargetForMeal: data.calorieTargetForMeal ? Number(data.calorieTargetForMeal) : undefined,
       };
+      // DEBUG: Log the payload being sent to the API
+      console.log("Sending AI Suggestion Payload:", payload);
       return fetchAISuggestionsAPI(payload);
     },
     onSuccess: (data) => {

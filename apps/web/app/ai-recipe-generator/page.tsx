@@ -2,12 +2,21 @@
 'use client';
 
 import { useState, FormEvent } from 'react';
+import { AuthGuard } from "@/components/shared/auth-guard";
 
 /**
  * AI菜谱生成器页面组件
  * @returns JSX.Element
  */
 export default function AiRecipeGeneratorPage() {
+  return (
+    <AuthGuard>
+      <AiRecipeGeneratorContent />
+    </AuthGuard>
+  );
+}
+
+function AiRecipeGeneratorContent() {
   const [prompt, setPrompt] = useState<string>('');
   const [recipe, setRecipe] = useState<string | null>(null);
   const [isLoading, setIsLoading] = useState<boolean>(false);

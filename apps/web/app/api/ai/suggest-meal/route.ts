@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server';
 import { z } from 'zod';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/app/api/auth/[...nextauth]/route';
-import prisma from '@/lib/prisma';
+import { prisma } from '@/lib/prisma';
 // Potentially import the ARK API client or fetch logic if it's modularized
 // For now, direct fetch like in generate-meal-plan is assumed
 
@@ -68,7 +68,7 @@ async function getRelevantExistingRecipes(params: {
     },
   });
 
-  return recipes.map(r => ({
+  return recipes.map((r: any) => ({
     id: r.id,
     title: r.title,
     description: r.description || '',
@@ -103,7 +103,7 @@ export async function POST(request: Request) {
       const relevantRecipes = await getRelevantExistingRecipes({ userId, healthGoal, mealTime });
       if (relevantRecipes.length > 0) {
         existingRecipeContext = 'Here are some existing recipes that might be suitable:\n';
-        relevantRecipes.forEach(recipe => {
+        relevantRecipes.forEach((recipe: any) => {
           const descriptionSnippet = recipe.description && typeof recipe.description === 'string' 
             ? recipe.description.substring(0, 100) + (recipe.description.length > 100 ? '...' : '') 
             : 'N/A';
@@ -115,7 +115,12 @@ export async function POST(request: Request) {
 
     // --- Construct Prompt for AI ---
 
-    let prompt = `You are an expert nutritionist and culinary assistant.\n    A user needs a suggestion for their ${mealTime}${targetDate ? \` on ${targetDate}\` : ''}.\n    Their primary health goal is: ${healthGoal || 'a balanced and healthy meal'}.`;
+    let dateClause = '';
+    if (targetDate) {
+      dateClause = ` on ${targetDate}`;
+    }
+
+    let prompt = `You are an expert nutritionist and culinary assistant.\n    A user needs a suggestion for their ${mealTime}${dateClause}.\n    Their primary health goal is: ${healthGoal || 'a balanced and healthy meal'}.`;
 
     if (dietaryRestrictions && dietaryRestrictions.length > 0) prompt += `\nDietary Restrictions: ${dietaryRestrictions.join(', ')}.`;
     if (allergies && allergies.length > 0) prompt += `\nAllergies: ${allergies.join(', ')}. Must avoid.`;
@@ -157,4 +162,24 @@ export async function POST(request: Request) {
     const aiData = await aiResponse.json();
     let content = aiData.choices?.[0]?.message?.content || '';
     
-    // Attempt to clean and parse JSON from AI response\n    let suggestions;\n    try {\n      // Remove potential markdown ```json ... ```\n      const jsonMatch = content.match(/```json\\n([\\s\\S]*?)\\n```/);\n      if (jsonMatch && jsonMatch[1]) {\n        content = jsonMatch[1];\n      }\n      const parsedContent = JSON.parse(content);\n      suggestions = SuggestMealResponseSchema.parse(parsedContent);\n    } catch (e) {\n      console.error('Failed to parse AI response as JSON or validate schema:', e, 'Raw AI content:', content);\n      return NextResponse.json({ error: 'AI response format error', details: (e as Error).message, rawResponse: content }, { status: 500 });\n    }\n\n    return NextResponse.json(suggestions);\n\n  } catch (error) {\n    console.error('[API AI SUGGEST-MEAL POST] Error:', error);\n    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });\n  }\n}\n 
+    // Attempt to clean and parse JSON from AI response
+    let suggestions;
+    try {
+      // Remove potential markdown ```json ... ```
+      const jsonMatch = content.match(/```json\n([\s\S]*?)\n```/);
+      if (jsonMatch && jsonMatch[1]) {
+        content = jsonMatch[1];
+      }
+      const parsedContent = JSON.parse(content);
+      suggestions = SuggestMealResponseSchema.parse(parsedContent);
+    } catch (e) {
+      console.error('Failed to parse AI response as JSON or validate schema:', e, 'Raw AI content:', content);
+      return NextResponse.json({ error: 'AI response format error', details: (e as Error).message, rawResponse: content }, { status: 500 });
+    }
+
+    return NextResponse.json(suggestions);
+  } catch (error) {
+    console.error('[API AI SUGGEST-MEAL POST] Error:', error);
+    return NextResponse.json({ error: 'Internal Server Error' }, { status: 500 });
+  }
+} 

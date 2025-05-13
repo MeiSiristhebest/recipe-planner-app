@@ -3,46 +3,61 @@ import { getToken } from 'next-auth/jwt';
 
 export async function middleware(req: NextRequest) {
   const { pathname, search } = req.nextUrl;
+  
+  // 从Cookie或请求头中获取next-auth的token
+  const token = await getToken({ 
+    req, 
+    secret: process.env.NEXTAUTH_SECRET,
+  });
 
-  // Define protected paths
+  // 定义受保护的路径
   const protectedPaths = [
     "/profile",
     "/meal-plans",
     "/recipes/create",
     "/shopping-list",
     "/ai-recipe-generator",
-    // Add other paths that require authentication, ensure they start with '/'
-    // Example: "/settings"
   ];
 
-  // Check if the current path is one of the protected paths
-  const isProtectedPath = protectedPaths.some(path => pathname.startsWith(path));
+  // 检查当前路径是否为受保护的路径（精确匹配或者是子路径）
+  const isProtectedPath = protectedPaths.some(path => 
+    pathname === path || pathname.startsWith(`${path}/`)
+  );
 
-  if (isProtectedPath) {
-    const token = await getToken({ req, secret: process.env.NEXTAUTH_SECRET });
-
-    if (!token) {
-      // User is not authenticated, redirect to login page
-      const loginUrl = new URL("/login", req.url);
-      loginUrl.searchParams.set("callbackUrl", pathname + search); // Preserve original path and query params
-      loginUrl.searchParams.set("from", "middleware"); // Add our custom 'from' parameter
-      return NextResponse.redirect(loginUrl);
+  // 如果是登录页面且用户已登录，则重定向到首页或回调URL
+  if (pathname === '/login' && token) {
+    const callbackUrl = req.nextUrl.searchParams.get('callbackUrl');
+    if (callbackUrl && callbackUrl.startsWith('/')) {
+      return NextResponse.redirect(new URL(callbackUrl, req.url));
     }
+    return NextResponse.redirect(new URL('/', req.url));
   }
 
-  // If path is not protected or user is authenticated, continue
+  // 如果是受保护的路径且用户未登录
+  if (isProtectedPath && !token) {
+    // 记录原始请求 URL，包括路径和查询参数
+    const originalUrl = pathname + (search || '');
+    
+    // 用户未认证，重定向到登录页面
+    const loginUrl = new URL("/login", req.url);
+    loginUrl.searchParams.set("callbackUrl", originalUrl);
+    
+    return NextResponse.redirect(loginUrl);
+  }
+
+  // 如果路径不受保护或用户已认证，继续
   return NextResponse.next();
 }
 
 export const config = {
   matcher: [
-    // Apply middleware to these paths
+    // 应用中间件的路径
+    "/login",
     "/profile/:path*",
     "/meal-plans/:path*",
     "/recipes/create/:path*",
     "/shopping-list/:path*",
     "/ai-recipe-generator/:path*",
-    // Example: "/settings/:path*"
   ],
 };
 

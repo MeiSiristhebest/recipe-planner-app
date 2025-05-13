@@ -38,7 +38,7 @@ export function Header() {
     return name.slice(0, 2).toUpperCase();
   };
 
-  const mainNavItems = status === 'authenticated' 
+  const mainNavItems = status === 'authenticated'
     ? [...navItems, { name: "个人中心", href: "/profile" }]
     : navItems;
 
@@ -81,7 +81,7 @@ export function Header() {
                   <Avatar className="h-9 w-9">
                     <AvatarImage src={session.user.image ?? undefined} alt={session.user.name ?? "User"} />
                     <AvatarFallback>{getUserInitials(session.user.name)}</AvatarFallback>
-            </Avatar>
+                  </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -91,7 +91,7 @@ export function Header() {
                     <p className="text-xs leading-none text-muted-foreground">
                       {session.user.email ?? ""}
                     </p>
-            </div>
+                  </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
@@ -107,7 +107,7 @@ export function Header() {
                   </Link>
                 </DropdownMenuItem>
                 <DropdownMenuSeparator />
-                <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/login' })} className="cursor-pointer">
+                <DropdownMenuItem onClick={() => signOut({ callbackUrl: '/' })} className="cursor-pointer">
                   <LogOut className="mr-2 h-4 w-4" />
                   <span>退出登录</span>
                 </DropdownMenuItem>
@@ -118,10 +118,10 @@ export function Header() {
           {status === "unauthenticated" && (
             <div className="hidden md:flex items-center gap-2">
               <Button variant="outline" asChild>
-                <Link href="/login">登录</Link>
+                <Link href="/login" className="flex items-center">登录</Link>
               </Button>
               <Button asChild>
-                <Link href="/register">注册</Link>
+                <Link href="/register" className="flex items-center">注册</Link>
               </Button>
             </div>
           )}
@@ -155,18 +155,18 @@ export function Header() {
                 {status === "unauthenticated" && (
                   <>
                     <hr className="my-3"/>
-                    <Button variant="outline" asChild className="w-full justify-start text-base py-2 px-3">
-                      <Link href="/login"><LogIn className="mr-2 h-4 w-4" />登录</Link>
+                    <Button variant="outline" asChild>
+                      <Link href="/login" className="w-full justify-start text-base py-2 px-3"><LogIn className="mr-2 h-4 w-4" />登录</Link>
                     </Button>
-                    <Button asChild className="w-full justify-start text-base py-2 px-3">
-                      <Link href="/register">注册</Link>
+                    <Button asChild>
+                      <Link href="/register" className="w-full justify-start text-base py-2 px-3">注册</Link>
                     </Button>
                   </>
                 )}
                  {status === "authenticated" && (
                   <>
                     <hr className="my-3"/>
-                    <Button variant="ghost" onClick={() => signOut({ callbackUrl: '/login' })} className="w-full justify-start text-base text-muted-foreground hover:text-destructive py-2 px-3">
+                    <Button variant="ghost" onClick={() => signOut({ callbackUrl: '/' })} className="w-full justify-start text-base text-muted-foreground hover:text-destructive py-2 px-3">
                        <LogOut className="mr-2 h-4 w-4" />
                        <span>退出登录</span>
                     </Button>

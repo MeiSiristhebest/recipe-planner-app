@@ -3,30 +3,34 @@
 import { revalidatePath } from "next/cache"
 import { prisma } from "@/lib/prisma"
 import { auth } from "@/lib/auth"
-import { mealPlanSchema } from "@recipe-planner/validators"
+import { mealPlanSchema } from "@repo/validators"
+import { z } from 'zod'
 
-export async function saveMealPlan(formData: FormData) {
+// Define schema for the expected object structure
+const saveMealPlanInputSchema = mealPlanSchema.extend({
+  // We'll receive items directly in the expected structure now
+  items: z.array(z.object({
+    recipeId: z.string(),
+    date: z.date(),
+    mealTime: z.string(), // Consider refining with z.enum if possible
+    servings: z.number().int().positive(),
+  }))
+});
+
+export async function saveMealPlan(inputData: z.infer<typeof saveMealPlanInputSchema>) {
   const session = await auth()
 
   if (!session?.user) {
     return { error: "请先登录" }
   }
 
-  // Parse form data
-  const rawData = {
-    name: formData.get("name") as string,
-    startDate: new Date(formData.get("startDate") as string),
-    endDate: new Date(formData.get("endDate") as string),
-    isTemplate: formData.get("isTemplate") === "true",
-    items: JSON.parse(formData.get("items") as string),
-  }
-
-  // Validate data
-  const validationResult = mealPlanSchema.safeParse(rawData)
+  // Validate the input object directly
+  const validationResult = saveMealPlanInputSchema.safeParse(inputData)
 
   if (!validationResult.success) {
+    console.error("Save Meal Plan Input Validation Error:", validationResult.error.flatten());
     return {
-      error: "表单验证失败",
+      error: "数据格式无效", // More specific error
       fieldErrors: validationResult.error.flatten().fieldErrors,
     }
   }
@@ -46,7 +50,7 @@ export async function saveMealPlan(formData: FormData) {
         },
         items: {
           create: data.items.map((item) => ({
-            date: item.date,
+            date: item.date, // Use the date from the validated data
             mealTime: item.mealTime,
             servings: item.servings,
             recipe: {
@@ -58,6 +62,10 @@ export async function saveMealPlan(formData: FormData) {
     })
 
     revalidatePath("/meal-plans")
+    // Revalidate templates path if saving a template
+    if (data.isTemplate) {
+        revalidatePath("/api/meal-plans/templates"); // Revalidate the template API route
+    }
     return { success: true, mealPlanId: mealPlan.id }
   } catch (error) {
     console.error("Failed to save meal plan:", error)
