@@ -13,23 +13,23 @@ export async function GET(request: NextRequest) {
 
     // Get shopping lists for the user
     try {
-      const shoppingLists = await prisma.shoppingList.findMany({
-        where: {
-          userId: session.user.id,
-        },
-        include: {
-          items: {
-            orderBy: {
-              category: "asc",
-            },
+    const shoppingLists = await prisma.shoppingList.findMany({
+      where: {
+        userId: session.user.id,
+      },
+      include: {
+        items: {
+          orderBy: {
+            category: "asc",
           },
         },
-        orderBy: {
-          updatedAt: "desc",
-        },
-      })
+      },
+      orderBy: {
+        updatedAt: "desc",
+      },
+    })
 
-      return NextResponse.json(shoppingLists)
+    return NextResponse.json(shoppingLists)
     } catch (dbError) {
       console.error("数据库查询购物清单失败:", dbError)
       return NextResponse.json({ error: "数据库查询失败", details: dbError.message }, { status: 500 })
@@ -65,26 +65,26 @@ export async function POST(request: NextRequest) {
     const data = validationResult.data
 
     try {
-      // Create shopping list
-      const shoppingList = await prisma.shoppingList.create({
-        data: {
-          name: data.name,
-          user: {
-            connect: { id: session.user.id },
-          },
-          items: {
-            create: data.items?.map((item) => ({
-              name: item.name,
-              quantity: item.quantity,
-              category: item.category,
-              completed: item.completed || false,
-              notes: item.notes,
-            })) || [],
-          },
+    // Create shopping list
+    const shoppingList = await prisma.shoppingList.create({
+      data: {
+        name: data.name,
+        user: {
+          connect: { id: session.user.id },
         },
-      })
+        items: {
+            create: data.items?.map((item) => ({
+            name: item.name,
+            quantity: item.quantity,
+            category: item.category,
+              completed: item.completed || false,
+            notes: item.notes,
+            })) || [],
+        },
+      },
+    })
 
-      return NextResponse.json(shoppingList)
+    return NextResponse.json(shoppingList)
     } catch (dbError) {
       console.error("创建购物清单数据库错误:", dbError)
       return NextResponse.json({ error: "数据库创建失败", details: dbError.message }, { status: 500 })

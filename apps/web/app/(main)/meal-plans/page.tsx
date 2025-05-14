@@ -84,22 +84,31 @@ async function fetchRecipeById(recipeId: string): Promise<Recipe | null> {
 
 // API function to fetch the current week's meal plan
 async function fetchCurrentMealPlan(weekStart: Date): Promise<MealPlan | null> {
-  // The API /api/meal-plans/current calculates the week based on 'today'
-  // If we want to fetch for a specific week based on currentWeekStart,
-  // the API would need to accept a date parameter.
-  // For now, let's assume /api/meal-plans/current is what we need for the *actual* current week
-  // and a different mechanism or API would be needed for browsing arbitrary weeks if different from store.
-  // However, the console log showed /api/meal-plans/current, so we'll use that.
-  // The API already handles 404 if no plan is found for the server's "current" week.
-  const response = await fetch('/api/meal-plans/current'); 
-  if (!response.ok) {
-    if (response.status === 404) {
-      return null; // No plan found for the current week, return null to indicate this
+  try {
+    // The API /api/meal-plans/current calculates the week based on 'today'
+    // If we want to fetch for a specific week based on currentWeekStart,
+    // the API would need to accept a date parameter.
+    // For now, let's assume /api/meal-plans/current is what we need for the *actual* current week
+    // and a different mechanism or API would be needed for browsing arbitrary weeks if different from store.
+    // However, the console log showed /api/meal-plans/current, so we'll use that.
+    // The API already handles 404 if no plan is found for the server's "current" week.
+    const response = await fetch('/api/meal-plans/current'); 
+    if (!response.ok) {
+      if (response.status === 404) {
+        console.log("No meal plan found for the current week");
+        return null; // No plan found for the current week, return null to indicate this
+      }
+      const errorText = await response.text();
+      console.error("Error fetching meal plan:", response.status, errorText);
+      const errorData = { message: `Error: ${response.status} - ${errorText.substring(0, 100)}` };
+      throw new Error(errorData.message || `Failed to fetch current meal plan. Status: ${response.status}`);
     }
-    const errorData = await response.json().catch(() => ({ message: 'Failed to fetch current meal plan and could not parse error' }));
-    throw new Error(errorData.message || `Failed to fetch current meal plan. Status: ${response.status}`);
+    return response.json();
+  } catch (error) {
+    console.error("Error in fetchCurrentMealPlan:", error);
+    // 即使发生错误，也返回null，这样不会阻止页面渲染
+    return null;
   }
-  return response.json();
 }
 
 // API function to fetch meal plan templates
@@ -841,9 +850,9 @@ function MealPlansContent() {
       <AISuggestMealModal
         isOpen={isAISuggestModalOpen}
         onClose={handleCloseAISuggestModal}
-        currentMealContext={currentMealContext} 
+        currentMealContext={currentMealContext}
         onMealSuggested={handleMealSuggestedFromAI}
-        onNewIdeaSelected={handleNewIdeaSelectedFromAI} 
+        onNewIdeaSelected={handleNewIdeaSelectedFromAI}
       />
     </div>
   )

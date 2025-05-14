@@ -47,7 +47,7 @@ export function Header() {
       <div className="container flex h-16 items-center justify-between">
         <div className="flex items-center gap-6 md:gap-10">
           <Link href="/" className="flex items-center space-x-2">
-            <span className="font-bold text-xl md:text-2xl text-primary">食谱规划助手</span>
+            <span className="font-bold text-xl md:text-2xl text-primary">觅食记</span>
           </Link>
 
           {/* Desktop Navigation */}
@@ -81,7 +81,7 @@ export function Header() {
                   <Avatar className="h-9 w-9">
                     <AvatarImage src={session.user.image ?? undefined} alt={session.user.name ?? "User"} />
                     <AvatarFallback>{getUserInitials(session.user.name)}</AvatarFallback>
-                  </Avatar>
+            </Avatar>
                 </Button>
               </DropdownMenuTrigger>
               <DropdownMenuContent className="w-56" align="end" forceMount>
@@ -91,7 +91,7 @@ export function Header() {
                     <p className="text-xs leading-none text-muted-foreground">
                       {session.user.email ?? ""}
                     </p>
-                  </div>
+            </div>
                 </DropdownMenuLabel>
                 <DropdownMenuSeparator />
                 <DropdownMenuItem asChild>
@@ -136,7 +136,7 @@ export function Header() {
             </SheetTrigger>
             <SheetContent side="right" className="w-[280px] sm:w-[320px]">
               <Link href="/" className="flex items-center space-x-2 mb-8">
-                <span className="font-bold text-xl text-primary">食谱规划助手</span>
+                <span className="font-bold text-xl text-primary">觅食记</span>
               </Link>
               <nav className="flex flex-col gap-3">
                 {mainNavItems.map((item) => (

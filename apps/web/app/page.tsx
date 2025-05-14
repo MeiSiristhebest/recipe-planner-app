@@ -24,27 +24,40 @@ async function fetchFeaturedRecipes(): Promise<{ recipes: Recipe[], total: numbe
 
 // API function to fetch current week's meal plan
 async function fetchCurrentMealPlan(): Promise<MealPlan | null> {
-  const response = await fetch('/api/meal-plans/current'); // Assuming an endpoint for current week's plan
-  if (!response.ok) {
-    if (response.status === 404) {
-      return null; // No plan found for the current week
+  try {
+    const response = await fetch('/api/meal-plans/current');
+    if (!response.ok) {
+      if (response.status === 404) {
+        return null; // No plan found for the current week
+      }
+      const errorText = await response.text();
+      console.error("Error fetching meal plan:", response.status, errorText);
+      throw new Error(`Failed to fetch meal plan: ${response.status}`);
     }
-    throw new Error('Failed to fetch meal plan');
+    return response.json();
+  } catch (error) {
+    console.error("Error in fetchCurrentMealPlan:", error);
+    return null;
   }
-  return response.json();
 }
 
 // API function to fetch shopping list summary
 async function fetchShoppingListSummary(): Promise<{ items: ShoppingListItem[], count: number }> {
-  // Assuming an endpoint for shopping list summary (e.g., first 3 items and total count)
-  const response = await fetch('/api/shopping-list/summary'); 
-  if (!response.ok) {
-    if (response.status === 404) {
-      return { items: [], count: 0 };
+  try {
+    const response = await fetch('/api/shopping-list/summary'); 
+    if (!response.ok) {
+      if (response.status === 404) {
+        return { items: [], count: 0 };
+      }
+      const errorText = await response.text();
+      console.error("Error fetching shopping list:", response.status, errorText);
+      throw new Error(`Failed to fetch shopping list: ${response.status}`);
     }
-    throw new Error('Failed to fetch shopping list');
+    return response.json();
+  } catch (error) {
+    console.error("Error in fetchShoppingListSummary:", error);
+    return { items: [], count: 0 };
   }
-  return response.json();
 }
 
 // API function to fetch recently viewed recipes
@@ -82,7 +95,8 @@ export default function Home() {
   } = useQuery({
     queryKey: ['currentMealPlan'],
     queryFn: fetchCurrentMealPlan,
-    enabled: isAuthenticated, // Only fetch if authenticated
+    enabled: isAuthenticated, // 仅当用户完全认证后才启用
+    retry: false, // 不要自动重试失败的请求
   });
 
   const { 
@@ -92,7 +106,8 @@ export default function Home() {
   } = useQuery({
     queryKey: ['shoppingListSummary'],
     queryFn: fetchShoppingListSummary,
-    enabled: isAuthenticated, // Only fetch if authenticated
+    enabled: isAuthenticated, // 仅当用户完全认证后才启用
+    retry: false, // 不要自动重试失败的请求
   });
 
   const { 
@@ -102,7 +117,8 @@ export default function Home() {
   } = useQuery({
     queryKey: ['recentlyViewedRecipes'],
     queryFn: fetchRecentlyViewedRecipes,
-    enabled: isAuthenticated, // Only fetch if authenticated
+    enabled: isAuthenticated, // 仅当用户完全认证后才启用
+    retry: false, // 不要自动重试失败的请求
   });
 
   const { 
@@ -112,7 +128,8 @@ export default function Home() {
   } = useQuery({
     queryKey: ['favoriteRecipes'],
     queryFn: fetchFavoriteRecipes,
-    enabled: isAuthenticated, // Only fetch if authenticated
+    enabled: isAuthenticated, // 仅当用户完全认证后才启用
+    retry: false, // 不要自动重试失败的请求
   });
 
   return (
@@ -123,7 +140,7 @@ export default function Home() {
           <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 items-center">
             <div className="flex flex-col justify-center space-y-4">
               <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl">
+                <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl bg-gradient-to-r from-primary to-primary/70 text-transparent bg-clip-text">
                   探索美味食谱，规划健康生活
                 </h1>
                 <p className="max-w-[600px] text-muted-foreground md:text-xl">轻松查找、分享、计划你的每一餐</p>
@@ -131,10 +148,30 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input type="search" placeholder="搜索食谱、食材或关键词..." className="pl-8 w-full" />
+                  <Input 
+                    type="search" 
+                    id="search-input"
+                    placeholder="搜索食谱、食材或关键词..." 
+                    className="pl-8 w-full" 
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter') {
+                        const value = (e.target as HTMLInputElement).value;
+                        if (value.trim()) {
+                          window.location.href = `/recipes?q=${encodeURIComponent(value.trim())}`;
+                        }
+                      }
+                    }}
+                  />
                 </div>
-                <Button asChild>
-                  <Link href="/recipes" key="hero-search-link">搜索</Link>
+                <Button 
+                  onClick={() => {
+                    const searchInput = document.getElementById('search-input') as HTMLInputElement;
+                    if (searchInput && searchInput.value.trim()) {
+                      window.location.href = `/recipes?q=${encodeURIComponent(searchInput.value.trim())}`;
+                    }
+                  }}
+                >
+                  搜索
                 </Button>
               </div>
             </div>
@@ -144,7 +181,7 @@ export default function Home() {
                 alt="美味食谱"
                 width={500}
                 height={500}
-                className="rounded-lg object-cover"
+                className="rounded-lg object-cover dark:opacity-80 dark:brightness-90"
                 priority
               />
             </div>

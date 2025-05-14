@@ -54,6 +54,24 @@ const INITIAL_SHOPPING_LIST = [
   },
 ]
 
+// 添加一个辅助函数来格式化数量信息，确保纯数字添加适当的单位
+const formatQuantity = (quantity) => {
+  if (!quantity) return '适量';
+  
+  // 如果数量只包含数字，添加默认单位 'g'
+  if (/^\d+$/.test(quantity.toString().trim())) {
+    return `${quantity}g`;
+  }
+  
+  // 如果数量是数字+单位的格式，但中间没有空格，加上空格
+  if (/^\d+[a-zA-Z克千克g]$/.test(quantity.toString().trim())) {
+    return quantity;
+  }
+  
+  // 其他情况，返回原始数量
+  return quantity;
+};
+
 export default function ShoppingListPage() {
   return (
     <AuthGuard>
@@ -194,7 +212,7 @@ function ShoppingListContent() {
     }
   }, [searchParams, mealPlanItems])
   
-  // 根据周计划生成购物清单项的函数 (返回后端API格式)
+  // 修改从周计划生成购物清单项的函数
   const generateShoppingListItemsFromMealPlan = (mealPlanItems) => {
     const result = []
     const uniqueIngredients = {}
@@ -205,7 +223,8 @@ function ShoppingListContent() {
         item.recipe.ingredients.forEach(ingredient => {
           // 这里需要根据实际的食材数据结构进行调整
           const ingredientName = ingredient.name || ingredient.item || ''
-          const quantity = ingredient.quantity || '适量'
+          const rawQuantity = ingredient.quantity || '适量'
+          const quantity = formatQuantity(rawQuantity) // 使用formatQuantity处理数量
           
           // 简化的食材分类逻辑 (实际项目中可能需要更复杂的逻辑或字典)
           let category = "其他"
@@ -425,12 +444,12 @@ function ShoppingListContent() {
       const newCheckedState = !currentItem.checked
       
       // 先在本地UI更新
-      setShoppingList(
-        shoppingList.map((category) => ({
-          ...category,
+    setShoppingList(
+      shoppingList.map((category) => ({
+        ...category,
           items: category.items.map((item) => (item.id === itemId ? { ...item, checked: newCheckedState } : item)),
-        })),
-      )
+      })),
+    )
       
       // 如果ID是临时ID(以temp_开头)，则跳过API调用
       if (String(itemId).startsWith('temp_') || String(itemId).startsWith('error_temp_')) {
@@ -467,10 +486,10 @@ function ShoppingListContent() {
     }
   }
 
-  // 添加新的购物清单项
+  // 更新添加新项目的函数
   const addNewItem = async () => {
     if (!newItem.trim()) return
-    
+
     try {
       // 确保有购物清单ID
       let listId = currentListId
@@ -478,6 +497,9 @@ function ShoppingListContent() {
         listId = await createNewShoppingList()
         if (!listId) return
       }
+      
+      // 格式化数量，确保纯数字添加单位
+      const formattedQuantity = formatQuantity(newItemQuantity)
       
       // 调用API添加项目
       const response = await fetch('/api/shopping-list/items', {
@@ -488,7 +510,7 @@ function ShoppingListContent() {
         body: JSON.stringify({
           shoppingListId: listId,
           name: newItem,
-          quantity: newItemQuantity,
+          quantity: formattedQuantity,
           category: newItemCategory,
           completed: false
         })
@@ -524,9 +546,9 @@ function ShoppingListContent() {
           }]
         })
       }
-      
-      setShoppingList(updatedList)
-      setNewItem("")
+
+    setShoppingList(updatedList)
+    setNewItem("")
       toast.success('物品已添加')
     } catch (error) {
       console.error('Error adding new item:', error)
@@ -562,12 +584,12 @@ function ShoppingListContent() {
       await Promise.all(promises)
       
       // 更新本地状态
-      setShoppingList(
-        shoppingList.map((category) => ({
-          ...category,
-          items: category.items.map((item) => ({ ...item, checked: true })),
-        })),
-      )
+    setShoppingList(
+      shoppingList.map((category) => ({
+        ...category,
+        items: category.items.map((item) => ({ ...item, checked: true })),
+      })),
+    )
       
       toast.success('已全部标记为完成')
     } catch (error) {
@@ -604,12 +626,12 @@ function ShoppingListContent() {
       await Promise.all(promises)
       
       // 更新本地状态
-      setShoppingList(
-        shoppingList.map((category) => ({
-          ...category,
-          items: category.items.map((item) => ({ ...item, checked: false })),
-        })),
-      )
+    setShoppingList(
+      shoppingList.map((category) => ({
+        ...category,
+        items: category.items.map((item) => ({ ...item, checked: false })),
+      })),
+    )
       
       toast.success('已全部标记为未完成')
     } catch (error) {
@@ -639,14 +661,14 @@ function ShoppingListContent() {
       await Promise.all(promises)
       
       // 更新本地状态
-      setShoppingList(
-        shoppingList
-          .map((category) => ({
-            ...category,
-            items: category.items.filter((item) => !item.checked),
-          }))
-          .filter((category) => category.items.length > 0),
-      )
+    setShoppingList(
+      shoppingList
+        .map((category) => ({
+          ...category,
+          items: category.items.filter((item) => !item.checked),
+        }))
+        .filter((category) => category.items.length > 0),
+    )
       
       toast.success('已清除完成项')
     } catch (error) {
@@ -676,7 +698,7 @@ function ShoppingListContent() {
       await Promise.all(promises)
       
       // 更新本地状态
-      setShoppingList([])
+    setShoppingList([])
       toast.success('已清空购物清单')
     } catch (error) {
       console.error('Error clearing all items:', error)
@@ -732,12 +754,12 @@ function ShoppingListContent() {
       {/* Add Item Form */}
       <div className="grid grid-cols-1 md:grid-cols-6 gap-2 mb-8">
         <div className="md:col-span-3">
-          <Input
-            placeholder="添加新物品..."
-            value={newItem}
-            onChange={(e) => setNewItem(e.target.value)}
-            onKeyDown={(e) => e.key === "Enter" && addNewItem()}
-          />
+        <Input
+          placeholder="添加新物品..."
+          value={newItem}
+          onChange={(e) => setNewItem(e.target.value)}
+          onKeyDown={(e) => e.key === "Enter" && addNewItem()}
+        />
         </div>
         <div className="md:col-span-1">
           <Input
@@ -800,7 +822,7 @@ function ShoppingListContent() {
                           {item.name}
                         </label>
                       </div>
-                      <span className="text-sm text-muted-foreground">{item.quantity}</span>
+                      <span className="text-sm text-muted-foreground">{formatQuantity(item.quantity)}</span>
                     </div>
                   ))}
                 </div>
@@ -830,8 +852,8 @@ function ShoppingListContent() {
                 createNewShoppingListFromItems(generatedItems);
               }}
             >
-              从周计划生成清单
-            </Button>
+            从周计划生成清单
+          </Button>
             
             <Button 
               variant="outline"
@@ -920,7 +942,7 @@ function ShoppingListContent() {
                   printContent += `
                     <div class="item ${item.checked ? 'checked' : ''}">
                       <div class="checkbox">${item.checked ? '✓' : ''}</div>
-                      ${item.name} <span class="quantity">${item.quantity}</span>
+                      ${item.name} <span class="quantity">${formatQuantity(item.quantity)}</span>
                     </div>
                   `;
                 });

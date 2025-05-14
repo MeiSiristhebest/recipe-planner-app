@@ -34,13 +34,13 @@ export default function LoginPage() {
     if (callbackUrl && callbackUrl !== "/profile") {
       const path = callbackUrl.split("?")[0]
       if (path.includes("meal-plans")) {
-        setInfoMessage("请登录以访问您的周计划和更多个性化功能。")
+      setInfoMessage("请登录以访问您的周计划和更多个性化功能。")
       } else if (path.includes("recipes/create")) {
         setInfoMessage("请登录以创建您自己的食谱。")
       } else if (path.includes("shopping-list")) {
         setInfoMessage("请登录以访问您的购物清单。")
       } else {
-        setInfoMessage("请登录以继续访问受保护的内容。")
+      setInfoMessage("请登录以继续访问受保护的内容。")
       }
     }
   }, [callbackUrl])

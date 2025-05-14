@@ -53,10 +53,15 @@ export const config = {
   matcher: [
     // 应用中间件的路径
     "/login",
+    "/profile",
     "/profile/:path*",
+    "/meal-plans",
     "/meal-plans/:path*",
+    "/recipes/create",
     "/recipes/create/:path*",
+    "/shopping-list",
     "/shopping-list/:path*",
+    "/ai-recipe-generator",
     "/ai-recipe-generator/:path*",
   ],
 };
