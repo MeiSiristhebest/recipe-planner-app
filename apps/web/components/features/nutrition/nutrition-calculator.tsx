@@ -42,6 +42,7 @@ export function NutritionCalculator({
   const [isCalculating, setIsCalculating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [missingIngredients, setMissingIngredients] = useState<string[]>([])
+  const [useAI, setUseAI] = useState<boolean>(false)
 
   const handleAddIngredient = () => {
     if (!newIngredient.name.trim()) {
@@ -65,7 +66,8 @@ export function NutritionCalculator({
     setIngredients(updatedIngredients)
   }
 
-  const handleCalculate = async () => {
+  // 使用数据库计算营养成分
+  const handleCalculateWithDatabase = async () => {
     if (ingredients.length === 0) {
       setError("请至少添加一种食材")
       return
@@ -104,6 +106,50 @@ export function NutritionCalculator({
       setIsCalculating(false)
     }
   }
+
+  // 使用AI计算营养成分
+  const handleCalculateWithAI = async () => {
+    if (ingredients.length === 0) {
+      setError("请至少添加一种食材")
+      return
+    }
+
+    setIsCalculating(true)
+    setError(null)
+
+    try {
+      const response = await fetch("/api/nutrition/ai-calculate", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify({
+          ingredients,
+          servings,
+        }),
+      })
+
+      if (!response.ok) {
+        throw new Error("AI计算营养成分失败")
+      }
+
+      const data = await response.json()
+      setNutritionInfo(data.perServingNutrition)
+      setMissingIngredients([]) // AI计算不需要显示缺失食材
+
+      if (onCalculate) {
+        onCalculate(data.perServingNutrition)
+      }
+    } catch (err) {
+      setError(err instanceof Error ? err.message : "AI计算营养成分失败")
+      console.error("AI营养计算错误:", err)
+    } finally {
+      setIsCalculating(false)
+    }
+  }
+
+  // 根据用户选择的方法计算
+  const handleCalculate = useAI ? handleCalculateWithAI : handleCalculateWithDatabase
 
   return (
     <div className={`grid grid-cols-1 md:grid-cols-2 gap-6 ${className}`}>
@@ -237,16 +283,48 @@ export function NutritionCalculator({
               />
             </div>
           </div>
+
+          {/* 计算方式选择 */}
+          <div className="pt-4 border-t">
+            <div className="flex items-center justify-between">
+              <Label htmlFor="calculation-method">计算方式</Label>
+              <div className="flex items-center space-x-2">
+                <Label htmlFor="ai-toggle" className={`text-sm ${useAI ? 'text-muted-foreground' : 'font-medium'}`}>数据库</Label>
+                <button
+                  type="button"
+                  role="switch"
+                  aria-checked={useAI}
+                  id="ai-toggle"
+                  onClick={() => setUseAI(!useAI)}
+                  className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors focus-visible:outline focus-visible:outline-2 focus-visible:outline-offset-2 focus-visible:outline-ring ${
+                    useAI ? 'bg-primary' : 'bg-input'
+                  }`}
+                >
+                  <span
+                    className={`inline-block h-4 w-4 transform rounded-full bg-background transition-transform ${
+                      useAI ? 'translate-x-6' : 'translate-x-1'
+                    }`}
+                  />
+                </button>
+                <Label htmlFor="ai-toggle" className={`text-sm ${useAI ? 'font-medium' : 'text-muted-foreground'}`}>AI</Label>
+              </div>
+            </div>
+            <p className="text-xs text-muted-foreground mt-1">
+              {useAI
+                ? "使用AI计算可能更准确，但速度较慢"
+                : "使用数据库计算速度快，但可能缺少某些食材数据"}
+            </p>
+          </div>
         </CardContent>
         <CardFooter>
           <Button className="w-full" onClick={handleCalculate} disabled={ingredients.length === 0 || isCalculating}>
             {isCalculating ? (
               <>
                 <Loader2 className="h-4 w-4 mr-2 animate-spin" />
-                计算中...
+                {useAI ? "AI计算中..." : "计算中..."}
               </>
             ) : (
-              "计算营养成分"
+              `${useAI ? "使用AI" : ""}计算营养成分`
             )}
           </Button>
         </CardFooter>
@@ -269,6 +347,16 @@ export function NutritionCalculator({
                       <li key={index}>{ingredient}</li>
                     ))}
                   </ul>
+                </AlertDescription>
+              </Alert>
+            )}
+
+            {useAI && nutritionInfo && (
+              <Alert className="mt-4" variant="default">
+                <AlertCircle className="h-4 w-4" />
+                <AlertTitle>AI计算</AlertTitle>
+                <AlertDescription>
+                  此营养数据由AI智能分析生成，可能与实际值有所差异。
                 </AlertDescription>
               </Alert>
             )}

@@ -24,8 +24,10 @@ export function AuthGuard({ children }: AuthGuardProps) {
     if (status !== "loading") {
       // 如果未登录，重定向到登录页面
       if (status === "unauthenticated") {
-        router.push(`/login?callbackUrl=${encodeURIComponent(pathname)}`);
-      } else {
+        console.log("AuthGuard: 用户未认证，重定向到登录页面，回调URL:", pathname);
+        router.replace(`/login?callbackUrl=${encodeURIComponent(pathname)}`);
+      } else if (status === "authenticated") {
+        console.log("AuthGuard: 用户已认证，显示受保护内容");
         // 已登录，显示内容
         setIsLoading(false);
       }
@@ -46,4 +48,4 @@ export function AuthGuard({ children }: AuthGuardProps) {
 
   // 已认证，渲染子组件
   return <>{children}</>;
-} 
+}

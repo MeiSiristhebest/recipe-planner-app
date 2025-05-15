@@ -6,6 +6,7 @@ import { Skeleton } from "@repo/ui/skeleton"
 interface RecipesPageProps {
   searchParams: {
     query?: string
+    q?: string // 添加对旧参数的支持
     category?: string
     difficulty?: string
     cookingTimeMax?: string

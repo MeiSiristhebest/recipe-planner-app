@@ -41,7 +41,14 @@ export function RecipeList({ searchParams }: RecipeListProps) {
   const buildQueryString = (pageToFetch: number) => {
     const params = new URLSearchParams()
 
-    if (searchParams.query) params.set("query", searchParams.query)
+    // 处理查询参数，支持 query 和 q 两种格式
+    if (searchParams.query) {
+      params.set("query", searchParams.query)
+    } else if (searchParams.q) {
+      // 如果使用了旧的 q 参数，也将其转换为 query 参数
+      params.set("query", searchParams.q)
+    }
+
     if (searchParams.category) params.set("category", searchParams.category)
     if (searchParams.difficulty) params.set("difficulty", searchParams.difficulty)
     if (searchParams.cookingTimeMax) params.set("cookingTimeMax", searchParams.cookingTimeMax)

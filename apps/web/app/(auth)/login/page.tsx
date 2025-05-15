@@ -25,7 +25,8 @@ export default function LoginPage() {
   useEffect(() => {
     if (status === "authenticated" && callbackUrl) {
       console.log("认证成功，重定向到:", callbackUrl)
-      router.push(callbackUrl)
+      // 使用replace而不是push，确保不能通过浏览器返回按钮回到登录页
+      router.replace(callbackUrl)
     }
   }, [status, router, callbackUrl])
 
@@ -67,6 +68,15 @@ export default function LoginPage() {
       } else {
         // 登录成功 - 不手动重定向，让 useEffect 监听状态变化处理重定向
         console.log("登录成功，等待会话更新自动重定向")
+
+        // 添加一个短暂延迟，确保会话状态已更新
+        setTimeout(() => {
+          // 如果会话状态仍未更新，手动重定向
+          if (status !== "authenticated") {
+            console.log("会话状态未自动更新，手动重定向到:", callbackUrl)
+            router.replace(callbackUrl)
+          }
+        }, 1000)
       }
     } catch (err) {
       console.error("登录提交错误", err)

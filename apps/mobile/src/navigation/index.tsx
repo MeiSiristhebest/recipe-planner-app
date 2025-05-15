@@ -16,7 +16,9 @@ import ForgotPasswordScreen from "../screens/ForgotPasswordScreen"
 import HomeScreen from "../screens/HomeScreen"
 import RecipesScreen from "../screens/RecipesScreen"
 import RecipeDetailScreen from "../screens/RecipeDetailScreen"
+import EditRecipeScreen from "../screens/EditRecipeScreen"
 import MealPlansScreen from "../screens/MealPlansScreen"
+import EditTemplateScreen from "../screens/EditTemplateScreen"
 import ShoppingListScreen from "../screens/ShoppingListScreen"
 import ProfileScreen from "../screens/ProfileScreen"
 
@@ -42,6 +44,18 @@ function RecipesStack() {
     <Stack.Navigator>
       <Stack.Screen name="RecipesList" component={RecipesScreen} options={{ title: "食谱库" }} />
       <Stack.Screen name="RecipeDetail" component={RecipeDetailScreen} options={{ title: "食谱详情" }} />
+      <Stack.Screen name="EditRecipe" component={EditRecipeScreen} options={{ title: "编辑食谱", headerShown: false }} />
+      <Stack.Screen name="RecipeSearch" component={RecipeSearchScreen} options={{ title: "搜索食谱" }} />
+      <Stack.Screen name="AddToMealPlan" component={AddToMealPlanScreen} options={{ title: "添加到周计划" }} />
+    </Stack.Navigator>
+  )
+}
+
+function MealPlansStack() {
+  return (
+    <Stack.Navigator>
+      <Stack.Screen name="MealPlansList" component={MealPlansScreen} options={{ title: "周计划", headerShown: false }} />
+      <Stack.Screen name="EditTemplate" component={EditTemplateScreen} options={{ title: "编辑模板", headerShown: false }} />
     </Stack.Navigator>
   )
 }
@@ -73,7 +87,7 @@ function MainTabs() {
     >
       <Tab.Screen name="Home" component={HomeScreen} options={{ title: "首页" }} />
       <Tab.Screen name="Recipes" component={RecipesStack} options={{ headerShown: false, title: "食谱库" }} />
-      <Tab.Screen name="MealPlans" component={MealPlansScreen} options={{ title: "周计划" }} />
+      <Tab.Screen name="MealPlans" component={MealPlansStack} options={{ headerShown: false, title: "周计划" }} />
       <Tab.Screen name="ShoppingList" component={ShoppingListScreen} options={{ title: "购物清单" }} />
       <Tab.Screen name="Profile" component={ProfileScreen} options={{ title: "个人中心" }} />
     </Tab.Navigator>

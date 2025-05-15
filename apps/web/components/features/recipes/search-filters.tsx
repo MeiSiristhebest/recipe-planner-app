@@ -29,7 +29,8 @@ export function SearchFilters({ onSearch, className = "" }: SearchFiltersProps) 
   const searchParams = useSearchParams()
 
   const [filters, setFilters] = useState<SearchFilters>({
-    query: searchParams.get("query") || "",
+    // 同时支持 query 和 q 参数，优先使用 query
+    query: searchParams.get("query") || searchParams.get("q") || "",
     category: searchParams.get("category") || undefined,
     difficulty: searchParams.get("difficulty") || undefined,
     cookingTimeMax: searchParams.get("cookingTimeMax") ? Number(searchParams.get("cookingTimeMax")) : undefined,
@@ -42,7 +43,8 @@ export function SearchFilters({ onSearch, className = "" }: SearchFiltersProps) 
   // 当URL参数变化时更新本地状态
   useEffect(() => {
     setFilters({
-      query: searchParams.get("query") || "",
+      // 同时支持 query 和 q 参数，优先使用 query
+      query: searchParams.get("query") || searchParams.get("q") || "",
       category: searchParams.get("category") || undefined,
       difficulty: searchParams.get("difficulty") || undefined,
       cookingTimeMax: searchParams.get("cookingTimeMax") ? Number(searchParams.get("cookingTimeMax")) : undefined,
@@ -215,10 +217,10 @@ export function SearchFilters({ onSearch, className = "" }: SearchFiltersProps) 
             { actualValue: "儿童喜爱", displayName: "儿童友好" },
           ].map((tag) => (
             <div key={tag.actualValue} className="flex items-center space-x-2">
-              <Checkbox 
-                id={`tag-${tag.actualValue}`} 
-                checked={filters.tag === tag.actualValue} 
-                onCheckedChange={() => handleTagToggle(tag.actualValue)} 
+              <Checkbox
+                id={`tag-${tag.actualValue}`}
+                checked={filters.tag === tag.actualValue}
+                onCheckedChange={() => handleTagToggle(tag.actualValue)}
               />
               <Label htmlFor={`tag-${tag.actualValue}`} className="text-sm font-normal">
                 {tag.displayName}

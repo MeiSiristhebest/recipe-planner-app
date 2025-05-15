@@ -10,7 +10,8 @@ import { NavigationEvents } from "@/components/shared/navigation-events"
 import { auth } from "@/lib/auth"
 import { Toaster } from "sonner"
 import { Header } from "@/components/shared/header"
-import { Footer } from "@/components/shared/footer" 
+import { Footer } from "@/components/shared/footer"
+import { AuthDebugger } from "@/components/debug/auth-debugger"
 
 const fontInter = Inter({ subsets: ["latin"] })
 
@@ -46,6 +47,7 @@ export default async function RootLayout({
                   {children}
                 </main>
                 <Footer />
+                <AuthDebugger />
               </div>
             </QueryProvider>
           </ThemeProvider>

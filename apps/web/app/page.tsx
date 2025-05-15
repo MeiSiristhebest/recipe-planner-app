@@ -44,7 +44,7 @@ async function fetchCurrentMealPlan(): Promise<MealPlan | null> {
 // API function to fetch shopping list summary
 async function fetchShoppingListSummary(): Promise<{ items: ShoppingListItem[], count: number }> {
   try {
-    const response = await fetch('/api/shopping-list/summary'); 
+    const response = await fetch('/api/shopping-list/summary');
     if (!response.ok) {
       if (response.status === 404) {
         return { items: [], count: 0 };
@@ -61,11 +61,11 @@ async function fetchShoppingListSummary(): Promise<{ items: ShoppingListItem[], 
 }
 
 // API function to fetch recently viewed recipes
-async function fetchRecentlyViewedRecipes(): Promise<Recipe[]> { 
+async function fetchRecentlyViewedRecipes(): Promise<Recipe[]> {
   const response = await fetch('/api/users/me/recently-viewed');
   if (!response.ok) {
-    if (response.status === 404) { 
-      return []; 
+    if (response.status === 404) {
+      return [];
     }
     throw new Error('Failed to fetch recently viewed recipes');
   }
@@ -88,10 +88,10 @@ export default function Home() {
   const { data: session, status } = useSession();
   const isAuthenticated = status === "authenticated";
 
-  const { 
-    data: mealPlanData, 
-    isLoading: isLoadingMealPlan, 
-    error: errorMealPlan 
+  const {
+    data: mealPlanData,
+    isLoading: isLoadingMealPlan,
+    error: errorMealPlan
   } = useQuery({
     queryKey: ['currentMealPlan'],
     queryFn: fetchCurrentMealPlan,
@@ -99,10 +99,10 @@ export default function Home() {
     retry: false, // 不要自动重试失败的请求
   });
 
-  const { 
-    data: shoppingListData, 
-    isLoading: isLoadingShoppingList, 
-    error: errorShoppingList 
+  const {
+    data: shoppingListData,
+    isLoading: isLoadingShoppingList,
+    error: errorShoppingList
   } = useQuery({
     queryKey: ['shoppingListSummary'],
     queryFn: fetchShoppingListSummary,
@@ -110,10 +110,10 @@ export default function Home() {
     retry: false, // 不要自动重试失败的请求
   });
 
-  const { 
-    data: recentlyViewedRecipes, 
-    isLoading: isLoadingRecentlyViewed, 
-    error: errorRecentlyViewed 
+  const {
+    data: recentlyViewedRecipes,
+    isLoading: isLoadingRecentlyViewed,
+    error: errorRecentlyViewed
   } = useQuery({
     queryKey: ['recentlyViewedRecipes'],
     queryFn: fetchRecentlyViewedRecipes,
@@ -121,10 +121,10 @@ export default function Home() {
     retry: false, // 不要自动重试失败的请求
   });
 
-  const { 
-    data: favoriteRecipes, 
-    isLoading: isLoadingFavorites, 
-    error: errorFavorites 
+  const {
+    data: favoriteRecipes,
+    isLoading: isLoadingFavorites,
+    error: errorFavorites
   } = useQuery({
     queryKey: ['favoriteRecipes'],
     queryFn: fetchFavoriteRecipes,
@@ -148,26 +148,26 @@ export default function Home() {
               <div className="flex flex-col sm:flex-row gap-2 sm:gap-4">
                 <div className="relative flex-1">
                   <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                  <Input 
-                    type="search" 
+                  <Input
+                    type="search"
                     id="search-input"
-                    placeholder="搜索食谱、食材或关键词..." 
-                    className="pl-8 w-full" 
+                    placeholder="搜索食谱、食材或关键词..."
+                    className="pl-8 w-full"
                     onKeyDown={(e) => {
                       if (e.key === 'Enter') {
                         const value = (e.target as HTMLInputElement).value;
                         if (value.trim()) {
-                          window.location.href = `/recipes?q=${encodeURIComponent(value.trim())}`;
+                          window.location.href = `/recipes?query=${encodeURIComponent(value.trim())}`;
                         }
                       }
                     }}
                   />
                 </div>
-                <Button 
+                <Button
                   onClick={() => {
                     const searchInput = document.getElementById('search-input') as HTMLInputElement;
                     if (searchInput && searchInput.value.trim()) {
-                      window.location.href = `/recipes?q=${encodeURIComponent(searchInput.value.trim())}`;
+                      window.location.href = `/recipes?query=${encodeURIComponent(searchInput.value.trim())}`;
                     }
                   }}
                 >
@@ -392,14 +392,14 @@ export default function Home() {
             {/* 创建新食谱 Card */}
             <Card className="flex flex-col">
               <CardHeader className="flex-row items-center space-x-4 pb-2">
-                <svg 
-                  xmlns="http://www.w3.org/2000/svg" 
-                  className="w-6 h-6 text-primary" 
-                  viewBox="0 0 24 24" 
-                  fill="none" 
-                  stroke="currentColor" 
-                  strokeWidth="2" 
-                  strokeLinecap="round" 
+                <svg
+                  xmlns="http://www.w3.org/2000/svg"
+                  className="w-6 h-6 text-primary"
+                  viewBox="0 0 24 24"
+                  fill="none"
+                  stroke="currentColor"
+                  strokeWidth="2"
+                  strokeLinecap="round"
                   strokeLinejoin="round"
                 >
                   <path d="M12 5v14M5 12h14" />

@@ -10,12 +10,13 @@ interface AuthProviderProps {
 
 export function AuthProvider({ children, session }: AuthProviderProps) {
   return (
-    <SessionProvider 
+    <SessionProvider
       session={session}
-      refetchInterval={5 * 60} // 每5分钟刷新会话
+      refetchInterval={1 * 60} // 每1分钟刷新会话，增加刷新频率
       refetchOnWindowFocus={true} // 窗口获取焦点时刷新会话
+      refetchWhenOffline={false} // 离线时不刷新
     >
       {children}
     </SessionProvider>
   );
-} 
+}
