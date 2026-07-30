@@ -1,12 +1,15 @@
 # 🥗 Recipe Planner & Meal Sharing Assistant (食谱规划与膳食管理助手)
 
-[🇨🇳 中文](#-中文) | [🇺🇸 English](#-english)
+[![License](https://img.shields.io/badge/License-MIT-blue.svg?style=for-the-badge)](LICENSE)
+[![Next.js](https://img.shields.io/badge/Next.js-14_App_Router-black.svg?style=for-the-badge)](README.md)
+[![React Native](https://img.shields.io/badge/React_Native-Expo_SDK-61DAFB.svg?style=for-the-badge)](README.md)
+[![Prisma](https://img.shields.io/badge/ORM-Prisma_%7C_PostgreSQL-2D3748.svg?style=for-the-badge)](README.md)
+
+[🇨🇳 中文](README.md) | [🇺🇸 English](README_EN.md)
 
 ---
 
-## 🇨🇳 中文
-
-### 📖 项目简介
+## 📖 项目简介
 
 **Recipe Planner & Sharing Assistant** 是一款基于 **Turborepo** 架构构建的高性能、跨平台（Web + Mobile）膳食规划与食谱分享助手。项目采用现代化的 Monorepo 组织形式，实现了 Web 端（Next.js 14 App Router）与移动端（React Native / Expo）的极高代码复用，共享 UI 组件库、Zod 数据校验规则、TypeScript 类型定义及 Prisma 数据库客户端。
 
@@ -208,40 +211,6 @@ pnpm dev --filter mobile
 
 ---
 
-## 🇺🇸 English
+## 📜 许可证 (License)
 
-### 📖 Introduction
-
-**Recipe Planner & Sharing Assistant** is a modern, high-performance, cross-platform (Web + Mobile) meal planning and recipe sharing solution engineered inside a **Turborepo** monorepo. It achieves maximum code sharing between the Web client (Next.js 14 App Router) and Mobile application (React Native / Expo), consolidating shared UI component libraries, Zod validation schemas, TypeScript contracts, and Prisma database interfaces.
-
-The system addresses key daily nutritional workflow challenges: recipe creation & discovery, automated weekly meal planning, dynamic calorie/macro tracking, and intelligent shopping list compilation categorized by market departments.
-
----
-
-## 🛠️ Architecture & Design Highlights
-
-### 1. Monorepo Dependency Isolation & Code Sharing 📦
-*   **Architecture Evolution**: Decouples application clients from core backend domain logic. Shared utilities, Prisma models, and Zod validators reside in isolated `packages/` modules. Build steps leverage Turborepo caching pipelines for rapid incremental compilation across platforms.
-*   **Topology Graph**: See the [Monorepo Dependency Diagram](#1-模块化-monorepo-依赖关系与代码复用-monorepo-architecture-) above.
-
-### 2. Meal Planning & Smart Shopping List Aggregation 🛒
-*   **Engine Design**: Users assign recipes to weekly slots (Breakfast, Lunch, Dinner). The system parses ingredient lists from scheduled recipes, calculates metric totals, normalizes units, and categorizes items into department groups (Produce, Meats, Dairy, Pantry) to render an interactive checkable shopping list.
-*   **Sequence Diagram**: See the [Weekly Meal Planning Flow](#2-膳食计划排程与智能购物清单生成引擎-meal-planning--aggregation-engine-) above.
-
----
-
-## 📊 Tech Stack Matrix
-
-- **Monorepo Architecture**: Turborepo, pnpm Workspaces
-- **Web App**: Next.js 14 (App Router), React 18, TypeScript, NextAuth.js
-- **Mobile App**: React Native, Expo SDK, TypeScript
-- **Database & ORM**: PostgreSQL, Prisma ORM
-- **State Engine**: TanStack Query v5, Zustand
-- **Styling & UI**: TailwindCSS, Shadcn/ui (Radix UI)
-- **Validation**: Zod (Shared runtime validation schemas)
-
----
-
-## 📜 License
-
-Licensed under the [MIT License](LICENSE).
+基于 [MIT License](LICENSE) 开源协议。
