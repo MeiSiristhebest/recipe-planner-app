@@ -1,0 +1,105 @@
+name: Deploy Web to Vercel
+
+on:
+  push:
+    branches: [master]
+    paths:
+      - 'apps/web/**'
+      - 'packages/**'
+      - 'prisma/**'
+      - 'package.json'
+      - 'pnpm-lock.yaml'
+      - 'pnpm-workspace.yaml'
+      - 'turbo.json'
+      - '.github/workflows/deploy.yml'
+  workflow_run:
+    workflows: ["CI"]
+    branches: [master]
+    types:
+      - completed
+  workflow_dispatch:
+
+concurrency:
+  group: deploy-vercel-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  deploy-web:
+    name: Deploy apps/web → Vercel
+    if: github.event.workflow_run.conclusion == 'success' || github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: apps/web
+    environment:
+      name: production
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: 10.10.0
+          run_install: false
+
+      - name: Setup Node.js 20
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: pnpm
+
+      - name: Install Vercel CLI globally
+        run: pnpm add -g vercel@latest
+
+      - name: Pull Vercel env & deploy (Production)
+        id: deploy
+        env:
+          VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
+          VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+          VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+        run: |
+          if [ -z "$VERCEL_TOKEN" ] || [ -z "$VERCEL_ORG_ID" ] || [ -z "$VERCEL_PROJECT_ID" ]; then
+            echo "::notice::Vercel secrets (VERCEL_TOKEN / VERCEL_ORG_ID / VERCEL_PROJECT_ID) not set. Skipping auto-deploy."
+            echo "::notice::Setup steps:"
+            echo "  1. npm i -g vercel && vercel login"
+            echo "  2. cd apps/web && vercel link  →  writes .vercel/project.json (ORG_ID + PROJECT_ID)"
+            echo "  3. Create a Vercel Token: https://vercel.com/account/tokens"
+            echo "  4. Repo → Settings → Secrets → Add: VERCEL_TOKEN, VERCEL_ORG_ID, VERCEL_PROJECT_ID"
+            echo "  5. Vercel Project → Settings → Environment Variables: add DATABASE_URL, NEXTAUTH_URL, NEXTAUTH_SECRET, and any OAuth provider keys"
+            exit 0
+          fi
+          echo "VERCEL_ORG_ID=$VERCEL_ORG_ID" >> "$GITHUB_ENV"
+          echo "VERCEL_PROJECT_ID=$VERCEL_PROJECT_ID" >> "$GITHUB_ENV"
+          echo "✅ Pulling Vercel env..."
+          vercel pull --yes --environment=production --token="$VERCEL_TOKEN"
+          echo "✅ Building production bundle..."
+          vercel build --prod --token="$VERCEL_TOKEN"
+          echo "🚀 Deploying prebuilt bundle to Vercel production..."
+          DEPLOY_URL=$(vercel deploy --prebuilt --prod --token="$VERCEL_TOKEN")
+          echo "url=$DEPLOY_URL" >> "$GITHUB_OUTPUT"
+          echo ""
+          echo "✅ Successfully deployed to: $DEPLOY_URL"
+
+  notify-mobile:
+    name: Reminder — Mobile (Expo EAS) requires manual publish
+    needs: deploy-web
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "📱 Mobile app (apps/mobile · React Native + Expo SDK) must be published manually via Expo EAS:"
+          echo ""
+          echo "  # One-time setup:"
+          echo "  npm i -g eas-cli"
+          echo "  cd apps/mobile && eas login && eas build:configure"
+          echo ""
+          echo "  # Build & submit:"
+          echo "  eas build --platform android --profile production"
+          echo "  eas build --platform ios     --profile production"
+          echo "  eas submit -p android --latest  # → Google Play"
+          echo "  eas submit -p ios     --latest  # → App Store Connect"
+          echo ""
+          echo "  OTA update (no store review):"
+          echo "  eas update --branch production --message \"chore: OTA sync with web vX.Y.Z\""
