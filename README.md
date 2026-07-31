@@ -50,7 +50,7 @@ Recipe Planner App 用一套统一的数据模型 + Monorepo 跨端共享包，*
 ## 🌿 环境要求
 
 | 依赖 | 最低版本 |
-|------|----------|
+|------|---------|
 | **Node.js** | 18.18 LTS（推荐 20.x） |
 | **pnpm** | 8.6.10 |
 | **PostgreSQL** | 14.0（推荐 15.x） |
@@ -78,7 +78,7 @@ cd recipe-planner-app
 docker compose up -d db
 # docker ps 应看到 recipe_planner_db_local 容器 (port 5432)
 
-# 3. 安装 monorepo 全依赖（pnpm 10.10，与 packageManager 字段对齐；~800MB）
+# 3. 安装 monorepo 全依赖（pnpm 10.10；~800MB）
 pnpm install
 
 # 4. 复制环境变量模板（下文 "Configuration" 有详细字段说明）
