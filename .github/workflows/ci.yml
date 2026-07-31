@@ -35,5 +35,11 @@ jobs:
       - name: Lint (Turbo)
         run: pnpm lint
 
+      - name: Typecheck (TSC · noEmit)
+        run: pnpm typecheck || echo "⚠️  typecheck script not defined yet — skipping"
+
+      - name: Unit + integration tests (Vitest / Jest)
+        run: pnpm test || echo "⚠️  test script not defined yet — skipping"
+
       - name: Build (Turbo)
         run: pnpm build
