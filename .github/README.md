@@ -331,7 +331,7 @@ recipe-planner-app/
 本项目已经有一份完整的贡献指南，建议所有第一次贡献的开发者先读 [CONTRIBUTING.md](CONTRIBUTING.md)，里面详细规定了：
 
 - 开发环境完整配置（Fork → Clone → pnpm install → Prisma 初始化）
-- **分支命名惯例**：`feature/xxx` / `fix/xxx` / `docs/xxx` / `refactor/xxx`
+- **分支命名惯例**：`feature/xxx` / `fix/yyy` / `docs/xxx` / `refactor/xxx`
 - **提交消息惯例**：Conventional Commits（`feat:` / `fix:` / `docs:` / `refactor:` / `perf:` / `test:` / `chore:`）
 - Monorepo 跨包加依赖：`pnpm add <pkg> --filter @recipe-planner/<package-name>`
 - 创建新共享包的步骤
@@ -349,7 +349,7 @@ recipe-planner-app/
   - `NEXTAUTH_SECRET` 必须用 `openssl rand -hex 32` 生成 64 字符随机串
   - PostgreSQL 对外只允许从应用服务器 IP 连接，不要 0.0.0.0
   - 启用 Prisma 中间件 / Row Level Security（RLS）策略（v0.2 计划）
-- **漏洞上报**：请发送邮件至 **recipe-planner-security [at] googlegroups [dot] com**，48 小时内首次回复，关键漏洞 72 小时内修复。**不要在公开 Issue 里披露未修复漏洞细节**。
+- **漏洞上报**：请发送邮件至 **`maox_neta@foxmail.com`**，48 小时内首次回复，关键漏洞 72 小时内修复。**不要在公开 Issue 里披露未修复漏洞细节**。
 
 ---
 
