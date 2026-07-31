@@ -190,9 +190,9 @@ graph TD
     subgraph Pkgs [共享包层 · packages]
       UI[packages/ui · Shadcn/Tailwind 跨端 UI 基础组件]
       DB[packages/prisma-db · Prisma Client + Schema]
-      V [packages/validators  · Zod Schemas（跨端表单校验）]
-      T [packages/types · TypeScript Shared Interfaces]
-      U [packages/utils · Helper Functions]
+      V[packages/validators  · Zod Schemas（跨端表单校验）]
+      T[packages/types · TypeScript Shared Interfaces]
+      U[packages/utils · Helper Functions]
       L[packages/eslint-config-custom · 统一 Lint 规范]
     end
 
