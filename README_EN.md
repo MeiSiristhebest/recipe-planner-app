@@ -51,7 +51,7 @@ Recipe Planner App solves **all four problems in one go** with a unified data mo
 ## 🟢 Requirements
 
 | Dependency | Minimum Version |
-|------------|------------------|
+|------------|-----------------|
 | **Node.js** | 18.18 LTS (20.x recommended) |
 | **pnpm** | 8.6.10 |
 | **PostgreSQL** | 14.0 (15.x recommended) |
@@ -79,7 +79,7 @@ cd recipe-planner-app
 docker compose up -d db
 # `docker ps` should show the `recipe_planner_db_local` container listening on port 5432.
 
-# 3. Install the entire monorepo's dependencies (pnpm 10.10, aligned with packageManager; ~ 800 MB)
+# 3. Install the entire monorepo's dependencies (pnpm 10.10; ~ 800 MB)
 pnpm install
 
 # 4. Copy the env template (see "Configuration" later in this file for every field)
