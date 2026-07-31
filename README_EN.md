@@ -1,4 +1,4 @@
-# Recipe Planner &amp; Meal Sharing Assistant 🥗
+# Recipe Planner & Meal Sharing Assistant 🥗
 
 <p align="center">
   <strong>Cross-platform meal planner · recipe sharing · smart shopping-list generator for families and individuals</strong>
@@ -22,7 +22,7 @@
 
 ## 📖 About
 
-**Recipe Planner &amp; Sharing Assistant** is a high-performance, cross-platform (Web + iOS + Android) meal-planning and recipe-sharing system built on **Turborepo + pnpm Workspaces**.
+**Recipe Planner & Sharing Assistant** is a high-performance, cross-platform (Web + iOS + Android) meal-planning and recipe-sharing system built on **Turborepo + pnpm Workspaces**.
 
 Individuals and families face four recurring pain points when managing day-to-day eating:
 
@@ -39,10 +39,10 @@ Recipe Planner App solves **all four problems in one go** with a unified data mo
 
 | # | Feature | Details | Contextual Note |
 |---|---------|---------|-----------------|
-| 1 | **🧭 Recipe discovery &amp; creation** | Browse community recipes, favourite, edit steps in Markdown rich text, multi-photo covers, search by category / tag / keyword. | One-click import from external recipe URLs is planned for v0.2. |
+| 1 | **🧭 Recipe discovery & creation** | Browse community recipes, favourite, edit steps in Markdown rich text, multi-photo covers, search by category / tag / keyword. | One-click import from external recipe URLs is planned for v0.2. |
 | 2 | **📅 Smart weekly meal planning** | Drag-and-drop calendar board for breakfast / lunch / dinner; auto-scales ingredient quantities on portion changes; supports whole-week template cloning. | Meal plans can be exported as iCalendar events. |
 | 3 | **📊 Live nutrition totals** | Aggregates macro + micronutrients by day / week against the USDA FDC nutrition database; supports configurable goal thresholds with in-app warnings. | Per-food nutrition values can be hand-overridden if the source data is wrong. |
-| 4 | **🛒 Smart shopping-list generator** | One-click collapses every ingredient across an entire weekly meal plan, **groups items by category** (produce / meat &amp; seafood / dairy &amp; eggs / pantry staples / other), normalises units across recipes, and merges duplicate ingredients. Tick items off as you go. | Shopping lists are shareable with family members for collaborative editing. |
+| 4 | **🛒 Smart shopping-list generator** | One-click collapses every ingredient across an entire weekly meal plan, **groups items by category** (produce / meat & seafood / dairy & eggs / pantry staples / other), normalises units across recipes, and merges duplicate ingredients. Tick items off as you go. | Shopping lists are shareable with family members for collaborative editing. |
 | 5 | **📱 Identical UX on Web + Mobile** | Next.js 14 SSR web front-end + React Native Expo iOS/Android app; the shared Zod validation schemas, Prisma DB client, base UI primitives, and TypeScript interfaces all live under `packages/*` so both platforms behave exactly the same. | Roughly **65 % of the code is shared** between the two runtimes. |
 | 6 | **🔐 NextAuth authentication** | Email + OAuth (GitHub / Google, extensible) login; JWT sessions; role-based enforcement of recipe public / private visibility. Per-user ownership acts as a lightweight RLS at the application layer. |
 
@@ -55,7 +55,7 @@ Recipe Planner App solves **all four problems in one go** with a unified data mo
 | **Node.js** | ≥ 18.18 LTS (20.x strongly recommended) | Root `package.json`, Next.js 14, React Native, Expo |
 | **pnpm**    | ≥ 8.6.10 (locked version in the repo: **10.10.0**) | Root `packageManager` field; monorepo workspace dependency management |
 | **PostgreSQL** | ≥ 14.0 (15.x recommended) | Prisma ORM persistence. Or just boot the Dockerised Postgres from Option A. |
-| **Docker &amp; Compose v2** | ≥ 24.0 | Option A: boots a Postgres container in one command (only the DB container is needed — apps run locally for fastest hot reload) |
+| **Docker & Compose v2** | ≥ 24.0 | Option A: boots a Postgres container in one command (only the DB container is needed — apps run locally for fastest hot reload) |
 | **Expo Go (mobile dev only)** | — | Install from App Store / Play Store, scan the printed QR code for on-device debugging. |
 
 ---
@@ -71,7 +71,7 @@ Two paths are provided. **If you just want things up as fast as possible, jump s
 Fastest path: start a health-checked PostgreSQL 15 container with Docker, then run every application-layer service (Web / Mobile / Prisma Client generation) locally with native pnpm — because native gives you the absolute fastest hot reload.
 
 ```bash
-# 1. Clone &amp; enter
+# 1. Clone & enter
 git clone https://github.com/MeiSiristhebest/recipe-planner-app.git
 cd recipe-planner-app
 
@@ -154,7 +154,7 @@ pnpm dev --filter web
 pnpm dev --filter mobile
 ```
 
-### Expected endpoints &amp; what to check
+### Expected endpoints & what to check
 
 | Target | URL / how to access | Smoke test |
 |--------|--------------------|------------|
@@ -171,7 +171,7 @@ pnpm dev --filter mobile
 4. Click the top-right **🛒 Generate this week's shopping list**. Under the hood the system:
    - walks every `MealPlanItem`, loads each `Recipe.ingredients`,
    - **normalises units** (15 ml soy sauce + 5 ml soy sauce = 20 ml soy sauce),
-   - **groups by aisle** (produce / meat &amp; seafood / dairy &amp; eggs / pantry staples / other),
+   - **groups by aisle** (produce / meat & seafood / dairy & eggs / pantry staples / other),
    - writes rows into the `ShoppingList` + `ShoppingListItem` tables.
 5. You're redirected to the shopping-list detail page where you can tick items off on desktop or scan the same URL into the Expo mobile app to tick items on the go.
 
@@ -317,9 +317,9 @@ recipe-planner-app/
 | **Monorepo build** | Turborepo 1.12 + pnpm 10 Workspaces | Incremental build cache + unified multi-package dependency management |
 | **Web framework** | Next.js 14 (App Router) + React 18 | SSR / RSC / Server Actions for high-performance rendering |
 | **Mobile framework** | React Native + Expo SDK | Native iOS / Android cross-platform builds with Expo Go on-device debugging |
-| **Database &amp; ORM** | PostgreSQL 15 + Prisma ORM 5.10 + @prisma/client 5.22 | Strongly typed data access + migration management + Studio GUI |
+| **Database & ORM** | PostgreSQL 15 + Prisma ORM 5.10 + @prisma/client 5.22 | Strongly typed data access + migration management + Studio GUI |
 | **State management** | Zustand (client globals) + TanStack Query v5 (API caching) | Zero-friction consumption of shared TypeScript types across packages |
-| **UI &amp; styling** | TailwindCSS + Shadcn/ui (Radix UI primitives) + responsive design system | Accessible, cross-platform consistent UI components (Web reuses `packages/ui` directly) |
+| **UI & styling** | TailwindCSS + Shadcn/ui (Radix UI primitives) + responsive design system | Accessible, cross-platform consistent UI components (Web reuses `packages/ui` directly) |
 | **Cross-platform validation** | Zod 3 | One `packages/validators` schema powers both Web and Mobile form validation |
 | **Authentication** | NextAuth.js v5 | Email + OAuth (GitHub / Google — extensible), JWT sessions |
 | **Release management** | Changesets | Semantic versioning + changelogs across every package in the monorepo |
