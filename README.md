@@ -47,15 +47,15 @@ Recipe Planner App 用一套统一的数据模型 + Monorepo 跨端共享包，*
 
 ---
 
-## ⚙️ Requirements
+## 🌿 环境要求
 
-| Prerequisite | Minimum Version | Required By |
-|-------------|-----------------|-------------|
-| **Node.js** | ≥ 18.18 LTS（推荐 20.x） | 根级 package.json / Next.js 14 / React Native / Expo |
-| **pnpm**    | ≥ 8.6.10（对齐仓库锁版本：**10.10.0**） | 根级 `packageManager` 字段，monorepo workspace 依赖管理 |
-| **PostgreSQL** | ≥ 14.0（推荐 15.x） | Prisma ORM 关系型存储；或直接用 docker compose 起（见 Option A）|
-| **Docker & Compose v2** | ≥ 24.0 | Option A 一键起 Postgres（仅需 DB 容器，不需要起整个 app） |
-| **Expo Go（仅 Mobile 开发）** | — | App Store / 应用宝搜索「Expo Go」安装，真机扫码调试 |
+| 依赖 | 最低版本 |
+|------|----------|
+| **Node.js** | 18.18 LTS（推荐 20.x） |
+| **pnpm** | 8.6.10 |
+| **PostgreSQL** | 14.0（推荐 15.x） |
+| **Docker & Compose v2** | 24.0（仅 Option A 需要） |
+| **Expo Go** | 移动端开发用，App Store / 应用宝下载 |
 
 ---
 
@@ -273,38 +273,31 @@ erDiagram
 
 ---
 
-## 📂 Project Structure
+## 📂 项目结构
 
 ```text
 recipe-planner-app/
-├── apps/                             # 交付层
-│   ├── web/                          # Web 端：Next.js 14 App Router，SSR + React Query
-│   └── mobile/                       # Mobile 端：React Native + Expo SDK
-├── packages/                         # 共享层（被 apps/* 交叉依赖）
-│   ├── prisma-db/                    # 共享 Prisma Client 实例（初始化 + 扩展方法）
-│   ├── types/                        # 全局 TS interfaces（Recipe / MealPlan / ShoppingList / User...）
-│   ├── ui/                           # 跨端 UI 基础组件（Button / Card / Modal / CalendarTile...）
-│   ├── utils/                        # 通用工具函数（日期、单位归一化、营养计算）
-│   ├── validators/                   # 基于 Zod 的统一数据验证 schemas
-│   └── eslint-config-custom/         # 统一的 ESLint / Prettier 规范
+├── apps/                             # 应用层
+│   ├── web/                          # Next.js 14 Web 端
+│   └── mobile/                       # React Native + Expo 移动端
+├── packages/                         # 跨端共享包
+│   ├── prisma-db/                    # Prisma Client + Schema
+│   ├── types/                        # 全局 TypeScript 接口
+│   ├── ui/                           # 跨端 UI 组件库
+│   ├── utils/                        # 工具函数
+│   ├── validators/                   # Zod 数据校验
+│   └── eslint-config-custom/         # 共享 ESLint 配置
 ├── prisma/                           # 数据层
-│   ├── schema.prisma                 # PostgreSQL 完整 Schema 声明 + 索引优化
-│   ├── seed.ts                       # 种子数据（20+ 示例食谱 / 分类 / 标签 / 营养数据）
-│   └── migrations/                   # Prisma Migrate 历史
-├── docs/                             # 深度文档（迁移到独立 docs 站时的内容池）
-│   └── COMPONENT_MIGRATION.md        # 共享 UI 组件迁移指南
-├── scripts/                          # 辅助脚本（数据导入 / 导出 / 健康检查）
-├── .github/                          # Issue / PR templates（可后续新增）
-├── public/                           # Web 端共享静态资源（Logo、og:image）
-├── docker-compose.yml                # PostgreSQL 15 单容器（开发调试用，带健康检查）
-├── turbo.json                        # Turborepo pipeline：build / lint / dev 的缓存与任务依赖
-├── pnpm-workspace.yaml               # workspace 路径声明
-├── package.json                      # 根级 packageManager = pnpm@10.10.0 + 根级脚本
-├── components.json                   # Shadcn/ui 组件配置
-├── CONTRIBUTING.md                   # 分支命名 / 提交规范 / Changesets 版本流程
-├── dev.md                            # 核心贡献者深度开发笔记（比 README 更细）
-├── README.md                         # 🇨🇳 本文档
-└── README_EN.md                      # 🇺🇸 English Version
+│   ├── schema.prisma                 # PostgreSQL Schema
+│   └── seed.ts                       # 种子数据
+├── public/                           # 静态资源
+├── docker-compose.yml                # PostgreSQL 开发容器
+├── turbo.json                        # Turborepo 配置
+├── pnpm-workspace.yaml               # pnpm workspace 声明
+├── package.json
+├── tsconfig.json
+├── README.md
+└── README_EN.md
 ```
 
 ---

@@ -48,15 +48,15 @@ Recipe Planner App solves **all four problems in one go** with a unified data mo
 
 ---
 
-## ⚙️ Requirements
+## 🟢 Requirements
 
-| Prerequisite | Minimum Version | Required by |
-|-------------|-----------------|-------------|
-| **Node.js** | ≥ 18.18 LTS (20.x strongly recommended) | Root `package.json`, Next.js 14, React Native, Expo |
-| **pnpm**    | ≥ 8.6.10 (locked version in the repo: **10.10.0**) | Root `packageManager` field; monorepo workspace dependency management |
-| **PostgreSQL** | ≥ 14.0 (15.x recommended) | Prisma ORM persistence. Or just boot the Dockerised Postgres from Option A. |
-| **Docker & Compose v2** | ≥ 24.0 | Option A: boots a Postgres container in one command (only the DB container is needed — apps run locally for fastest hot reload) |
-| **Expo Go (mobile dev only)** | — | Install from App Store / Play Store, scan the printed QR code for on-device debugging. |
+| Dependency | Minimum Version |
+|------------|------------------|
+| **Node.js** | 18.18 LTS (20.x recommended) |
+| **pnpm** | 8.6.10 |
+| **PostgreSQL** | 14.0 (15.x recommended) |
+| **Docker & Compose v2** | 24.0 (Option A only) |
+| **Expo Go** | For mobile dev only, available on App Store / Play Store |
 
 ---
 
@@ -278,34 +278,27 @@ erDiagram
 
 ```text
 recipe-planner-app/
-├── apps/                             # Shippable application layer
-│   ├── web/                          # Web: Next.js 14 App Router, SSR + React Query
-│   └── mobile/                       # Mobile: React Native + Expo SDK
-├── packages/                         # Shared layer (cross-imported by apps/*)
-│   ├── prisma-db/                    # Shared Prisma Client instance (init + extensions)
-│   ├── types/                        # Global TS interfaces (Recipe / MealPlan / ShoppingList / User…)
-│   ├── ui/                           # Cross-platform base UI (Button / Card / Modal / CalendarTile…)
-│   ├── utils/                        # Generic helpers (dates, unit normalisation, nutrition math)
-│   ├── validators/                   # Zod-schema unified data validation
-│   └── eslint-config-custom/         # Shared ESLint + Prettier config
+├── apps/                             # Application layer
+│   ├── web/                          # Next.js 14 Web app
+│   └── mobile/                       # React Native + Expo mobile app
+├── packages/                         # Cross-platform shared packages
+│   ├── prisma-db/                    # Prisma Client + Schema
+│   ├── types/                        # Global TypeScript interfaces
+│   ├── ui/                           # Cross-platform UI component library
+│   ├── utils/                        # Utility functions
+│   ├── validators/                   # Zod schemas
+│   └── eslint-config-custom/         # Shared ESLint config
 ├── prisma/                           # Data layer
-│   ├── schema.prisma                 # Full Postgres schema + index optimisations
-│   ├── seed.ts                       # 20+ demo recipes / categories / tags / nutrition data
-│   └── migrations/                   # Prisma Migrate history
-├── docs/                             # Deep docs (content pool for future standalone docs site)
-│   └── COMPONENT_MIGRATION.md        # Shared UI-component migration guide
-├── scripts/                          # Helper scripts (import / export / health checks)
-├── .github/                          # Issue / PR templates (add as needed)
-├── public/                           # Web-shared static assets (logo, og:image)
-├── docker-compose.yml                # Single PostgreSQL 15 container (dev only, health-checked)
-├── turbo.json                        # Turborepo pipeline: cache + task deps for build/lint/dev
-├── pnpm-workspace.yaml               # Workspace path declarations
-├── package.json                      # Root packageManager = pnpm@10.10.0 + root scripts
-├── components.json                   # Shadcn/ui component config
-├── CONTRIBUTING.md                   # Branch naming / commit rules / Changesets flow
-├── dev.md                            # Core-contributor notes (deeper than README)
-├── README.md                         # 🇨🇳 Chinese
-└── README_EN.md                      # 🇺🇸 English
+│   ├── schema.prisma                 # PostgreSQL Schema
+│   └── seed.ts                       # Seed data
+├── public/                           # Static assets
+├── docker-compose.yml                # PostgreSQL dev container
+├── turbo.json                        # Turborepo config
+├── pnpm-workspace.yaml               # pnpm workspace declarations
+├── package.json
+├── tsconfig.json
+├── README.md
+└── README_EN.md
 ```
 
 ---
