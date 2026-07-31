@@ -349,7 +349,7 @@ recipe-planner-app/
   - `NEXTAUTH_SECRET` 必须用 `openssl rand -hex 32` 生成 64 字符随机串
   - PostgreSQL 对外只允许从应用服务器 IP 连接，不要 0.0.0.0
   - 启用 Prisma 中间件 / Row Level Security（RLS）策略（v0.2 计划）
-- **漏洞上报**：请发送邮件至 **recipe-planner-security [at] googlegroups [dot] com**，48 小时内首次回复，关键漏洞 72 小时内修复。**不要在公开 Issue 里披露未修复漏洞细节**。
+- **漏洞上报**：请发送邮件至 **`maox_neta@foxmail.com`**，48 小时内首次回复，关键漏洞 72 小时内修复。**不要在公开 Issue 里披露未修复漏洞细节**。
 
 ---
 
