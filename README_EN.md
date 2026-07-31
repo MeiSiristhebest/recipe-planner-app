@@ -183,22 +183,29 @@ pnpm dev --filter mobile
 
 ```mermaid
 graph TD
-    subgraph Apps [Application layer · Apps]
-      W[apps/web · Next.js 14 App Router]
-      M[apps/mobile · React Native + Expo SDK]
+    subgraph Apps["Application layer · Apps"]
+      W["apps/web · Next.js 14 App Router"]
+      M["apps/mobile · React Native + Expo SDK"]
     end
 
-    subgraph Pkgs [Shared packages · packages]
-      UI[packages/ui · Shadcn/Tailwind cross-platform base UI kit]
-      DB[packages/prisma-db · Prisma Client + Schema]
-      V [packages/validators  · Zod Schemas (shared form validation)]
-      T[packages/types · TypeScript shared interfaces]
-      U[packages/utils · Helper functions]
-      L[packages/eslint-config-custom · Unified lint rules]
+    subgraph Pkgs["Shared packages · packages"]
+      UI["packages/ui · Shadcn/Tailwind cross-platform base UI kit"]
+      DB["packages/prisma-db · Prisma Client + Schema"]
+      V["packages/validators · Zod Schemas"]
+      T["packages/types · TypeScript shared interfaces"]
+      U["packages/utils · Helper functions"]
+      L["packages/eslint-config-custom · Unified lint rules"]
     end
 
-    W --> UI; W --> DB; W --> V; W --> T; W --> U
-    M --> UI; M --> V; M --> T; M --> U
+    W --> UI
+    W --> DB
+    W --> V
+    W --> T
+    W --> U
+    M --> UI
+    M --> V
+    M --> T
+    M --> U
     DB --> T
 ```
 
