@@ -17,8 +17,27 @@
 ---
 
 <p align="center">
-    <strong>Cross-platform meal planner · recipe sharing · smart shopping-list generator for families and individuals</strong>
+  <strong>Cross-platform meal planner · recipe sharing · smart shopping-list generator for families and individuals</strong>
 </p>
+
+---
+
+## 📑 Table of Contents
+
+- [📖 About](#-about)
+- [✨ Features](#-features)
+- [🟢 Requirements](#-requirements)
+- [📦 Installation](#-installation)
+- [🚀 Quick Start](#-quick-start)
+- [🔧 Configuration](#-configuration)
+- [📐 Architecture](#-architecture)
+- [📂 Project Structure](#-project-structure)
+- [📊 Tech Stack](#-tech-stack)
+- [🤝 Contributing](#-contributing)
+- [🔒 Security](#-security)
+- [📄 License](#-license)
+
+---
 
 ## 📖 About
 
@@ -35,7 +54,7 @@ Recipe Planner App solves **all four problems in one go** with a unified data mo
 
 ---
 
-## ✨ Key Features
+## ✨ Features
 
 | # | Feature | Details | Contextual Note |
 |---|---------|---------|-----------------|
@@ -44,7 +63,7 @@ Recipe Planner App solves **all four problems in one go** with a unified data mo
 | 3 | **📊 Live nutrition totals** | Aggregates macro + micronutrients by day / week against the USDA FDC nutrition database; supports configurable goal thresholds with in-app warnings. | Per-food nutrition values can be hand-overridden if the source data is wrong. |
 | 4 | **🛒 Smart shopping-list generator** | One-click collapses every ingredient across an entire weekly meal plan, **groups items by category** (produce / meat & seafood / dairy & eggs / pantry staples / other), normalises units across recipes, and merges duplicate ingredients. Tick items off as you go. | Shopping lists are shareable with family members for collaborative editing. |
 | 5 | **📱 Identical UX on Web + Mobile** | Next.js 14 SSR web front-end + React Native Expo iOS/Android app; the shared Zod validation schemas, Prisma DB client, base UI primitives, and TypeScript interfaces all live under `packages/*` so both platforms behave exactly the same. | Roughly **65 % of the code is shared** between the two runtimes. |
-| 6 | **🔐 NextAuth authentication** | Email + OAuth (GitHub / Google, extensible) login; JWT sessions; role-based enforcement of recipe public / private visibility. Per-user ownership acts as a lightweight RLS at the application layer. |
+| 6 | **🔐 NextAuth authentication** | Email + OAuth (GitHub / Google, extensible) login; JWT sessions; role-based enforcement of recipe public / private visibility. | Per-user ownership acts as a lightweight RLS at the application layer. |
 
 ---
 
@@ -64,8 +83,6 @@ Recipe Planner App solves **all four problems in one go** with a unified data mo
 
 Two paths are provided. **If you just want things up as fast as possible, jump straight to Option A (Docker one-command Postgres + local monorepo dev).**
 
----
-
 ### Option A · Docker Compose for PostgreSQL + local monorepo (recommended)
 
 Fastest path: start a health-checked PostgreSQL 15 container with Docker, then run every application-layer service (Web / Mobile / Prisma Client generation) locally with native pnpm — because native gives you the absolute fastest hot reload.
@@ -82,7 +99,7 @@ docker compose up -d db
 # 3. Install the entire monorepo's dependencies (pnpm 10.10; ~ 800 MB)
 pnpm install
 
-# 4. Copy the env template (see "Configuration" later in this file for every field)
+# 4. Copy the env template (every field is documented in the "Configuration" section below)
 cp .env.example .env
 # Edit: DATABASE_URL (default matches docker compose, usually fine), NEXTAUTH_URL, NEXTAUTH_SECRET, OAuth providers.
 
@@ -92,9 +109,7 @@ pnpm db:push
 pnpm db:seed
 ```
 
-✅ You're installed — skip ahead to **Quick Start** to run both platforms.
-
----
+✅ You're installed — skip ahead to [🚀 Quick Start](#-quick-start) to run both platforms.
 
 ### Option B · Use a remote PostgreSQL (no local Docker at all)
 
@@ -112,30 +127,6 @@ pnpm db:generate
 pnpm db:push      # First time: creates tables. For ongoing migrations, use pnpm db:migrate:dev.
 pnpm db:seed      # Optional: populates the demo dataset.
 ```
-
----
-
-### 🔧 Configuration · mandatory fields in `.env`
-
-```env
-# ========== Database ==========
-# Matches the docker-compose.yml PostgreSQL 15 credentials from Option A.
-DATABASE_URL="postgresql://recipe_user:recipe_password@localhost:5432/recipe_planner_dev"
-
-# ========== NextAuth ==========
-# Absolute URL of the Web app (localhost:3000 for dev; your real domain in production)
-NEXTAUTH_URL="http://localhost:3000"
-# Generate with:  openssl rand -hex 32
-NEXTAUTH_SECRET="your-nextauth-secret-key-64-char-hex"
-
-# ========== OAuth Providers (optional — keep email at minimum) ==========
-# GITHUB_ID=xxx
-# GITHUB_SECRET=xxx
-# GOOGLE_ID=xxx
-# GOOGLE_SECRET=xxx
-```
-
-> 📌 If a `.env.example` template was never committed to the repo, the block above is the authoritative template. Copy/paste it verbatim.
 
 ---
 
@@ -177,7 +168,33 @@ pnpm dev --filter mobile
 
 ---
 
-## 🏗️ Architecture Highlights
+## 🔧 Configuration
+
+Mandatory fields in `.env`:
+
+```env
+# ========== Database ==========
+# Matches the docker-compose.yml PostgreSQL 15 credentials from Option A.
+DATABASE_URL="postgresql://recipe_user:recipe_password@localhost:5432/recipe_planner_dev"
+
+# ========== NextAuth ==========
+# Absolute URL of the Web app (localhost:3000 for dev; your real domain in production)
+NEXTAUTH_URL="http://localhost:3000"
+# Generate with:  openssl rand -hex 32
+NEXTAUTH_SECRET="your-nextauth-secret-key-64-char-hex"
+
+# ========== OAuth Providers (optional — keep email at minimum) ==========
+# GITHUB_ID=xxx
+# GITHUB_SECRET=xxx
+# GOOGLE_ID=xxx
+# GOOGLE_SECRET=xxx
+```
+
+> 📌 If a `.env.example` template was never committed to the repo, the block above is the authoritative template. Copy/paste it verbatim.
+
+---
+
+## 📐 Architecture
 
 ### 1. Monorepo topology dependency graph
 
@@ -212,13 +229,12 @@ graph TD
 Thanks to **pnpm Workspaces** + **Turborepo incremental builds**, changing a shared package only invalidates the apps that depend on it; everything else returns sub-second from `node_modules/.cache/turbo`. End result: consistent sub-second incremental compile across both platforms.
 
 **Key source entry points:**
+
 - [turbo.json — Build pipeline (build / lint / dev tasks)](turbo.json)
 - [package.json — pnpm workspace aliases + root scripts `pnpm db:*`](package.json)
 - [packages/prisma-db/ — shared Prisma Client instance](packages/prisma-db/)
 - [packages/validators/ — shared Zod schemas](packages/validators/)
 - [packages/ui/ — shared UI component library](packages/ui/)
-
----
 
 ### 2. Meal plan + shopping-list aggregation engine
 
@@ -246,10 +262,9 @@ sequenceDiagram
 ```
 
 **Key source entry points:**
+
 - [prisma/schema.prisma — MealPlanItem ↔ RecipeIngredient ↔ Category relation declarations](prisma/schema.prisma)
 - [packages/validators/ — Meal-plan submission + shopping-list Zod schemas](packages/validators/)
-
----
 
 ### 3. Unified data model (ER diagram)
 
@@ -277,6 +292,7 @@ erDiagram
 ```
 
 **Key source entry points:**
+
 - [prisma/schema.prisma — Full PostgreSQL schema declaration + index optimisation comments](prisma/schema.prisma)
 
 ---
@@ -310,7 +326,7 @@ recipe-planner-app/
 
 ---
 
-## 📊 Technology Stack Summary
+## 📊 Tech Stack
 
 | Layer | Choice | Role |
 |:----|:----|:----|
