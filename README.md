@@ -17,14 +17,34 @@
 ---
 
 <p align="center">
-    <strong>跨平台膳食规划、食谱分享与智能购物清单生成助手</strong>
+  <strong>跨平台膳食规划、食谱分享与智能购物清单生成助手</strong>
 </p>
 
-## 📖 About
+---
+
+## 📑 目录 (Table of Contents)
+
+- [📖 项目简介 (About)](#-项目简介-about)
+- [✨ 核心功能 (Features)](#-核心功能-features)
+- [🟢 环境要求 (Requirements)](#-环境要求-requirements)
+- [📦 安装部署 (Installation)](#-安装部署-installation)
+- [🚀 快速开始 (Quick Start)](#-快速开始-quick-start)
+- [🔧 配置说明 (Configuration)](#-配置说明-configuration)
+- [📐 架构设计 (Architecture)](#-架构设计-architecture)
+- [📂 项目结构 (Project Structure)](#-项目结构-project-structure)
+- [📊 技术栈 (Tech Stack)](#-技术栈-tech-stack)
+- [🤝 参与贡献 (Contributing)](#-参与贡献-contributing)
+- [🔒 安全说明 (Security)](#-安全说明-security)
+- [📄 许可证 (License)](#-许可证-license)
+
+---
+
+## 📖 项目简介 (About)
 
 **Recipe Planner & Sharing Assistant** 是一款基于 **Turborepo + pnpm Workspaces** 构建的高性能、跨端（Web + iOS/Android）膳食规划与食谱分享平台。
 
 个人与家庭在日常饮食管理中，普遍面临四个重复出现的痛点：
+
 1. **食谱探索效率低** — 网上食谱分散且质量参差，缺乏一个自己可收藏、可二次编辑的私有食谱库
 2. **一周膳食排程繁琐** — 日历式排程需要手动记录每个餐次的食谱、份数与食材量
 3. **营养信息统计缺失** — 无法实时汇总一周的宏量营养素（热量/蛋白/碳水/脂肪）和微量元素
@@ -34,10 +54,10 @@ Recipe Planner App 用一套统一的数据模型 + Monorepo 跨端共享包，*
 
 ---
 
-## ✨ Key Features
+## ✨ 核心功能 (Features)
 
-| # | Feature | Details | Contextual Note |
-|---|---------|---------|-----------------|
+| # | 功能 | 说明 | 补充备注 |
+|---|------|------|----------|
 | 1 | **🧭 食谱探索与创作** | 浏览社区食谱、收藏、基于 Markdown 富文本编辑步骤、多图封面上传、按分类/标签/关键词检索 | 支持一键导入外部食谱 URL（计划 v0.2） |
 | 2 | **📅 智能一周膳食排程** | 日历看板拖拽式安排早/午/晚餐，自动按份数缩放食材用量，支持模板化整周复制 | 膳食计划可导出 iCalendar 事件 |
 | 3 | **📊 实时营养成分统计** | 基于 USDA FDC 营养数据库，按天/周维度聚合宏量与微量元素，支持目标阈值预警 | 食材营养数据可人工修订覆盖 |
@@ -47,7 +67,7 @@ Recipe Planner App 用一套统一的数据模型 + Monorepo 跨端共享包，*
 
 ---
 
-## 🌿 环境要求
+## 🟢 环境要求 (Requirements)
 
 | 依赖 | 最低版本 |
 |------|---------|
@@ -59,11 +79,9 @@ Recipe Planner App 用一套统一的数据模型 + Monorepo 跨端共享包，*
 
 ---
 
-## 📦 Installation
+## 📦 安装部署 (Installation)
 
 我们提供两种启动方式。**想先快速跑起来的用户直接选 Option A（Docker 一键起 DB + pnpm 本地起双端）**。
-
----
 
 ### Option A：Docker Compose 起 PostgreSQL + 本地 Monorepo 开发（推荐）
 
@@ -81,7 +99,7 @@ docker compose up -d db
 # 3. 安装 monorepo 全依赖（pnpm 10.10；~800MB）
 pnpm install
 
-# 4. 复制环境变量模板（下文 "Configuration" 有详细字段说明）
+# 4. 复制环境变量模板（每个字段的含义见下文「配置说明 (Configuration)」章节）
 cp .env.example .env
 # 编辑 DATABASE_URL（默认已对齐 docker compose 中的 DB 账号密码，通常无需改）、NEXTAUTH_URL、NEXTAUTH_SECRET、OAuth Providers
 
@@ -91,9 +109,7 @@ pnpm db:push
 pnpm db:seed
 ```
 
-✅ 安装完成，接下来跳到 **Quick Start** 直接跑双端。
-
----
+✅ 安装完成，接下来跳到 [🚀 快速开始 (Quick Start)](#-快速开始-quick-start) 直接跑双端。
 
 ### Option B：使用远程 PostgreSQL（本地完全不装 Docker）
 
@@ -114,33 +130,9 @@ pnpm db:seed   # 可选，填充示例数据
 
 ---
 
-### 🔧 Configuration（.env 必填字段）
+## 🚀 快速开始 (Quick Start)
 
-```env
-# ========== Database ==========
-# 对齐 Option A 中 docker-compose.yml 的 Postgres 15 账号
-DATABASE_URL="postgresql://recipe_user:recipe_password@localhost:5432/recipe_planner_dev"
-
-# ========== NextAuth ==========
-# Web 端的绝对地址（开发默认 localhost:3000；生产改为你的域名）
-NEXTAUTH_URL="http://localhost:3000"
-# 生成密钥：openssl rand -hex 32
-NEXTAUTH_SECRET="your-nextauth-secret-key-64-char-hex"
-
-# ========== OAuth Providers（可选，至少留一个 Email 方式可用）==========
-# GITHUB_ID=xxx
-# GITHUB_SECRET=xxx
-# GOOGLE_ID=xxx
-# GOOGLE_SECRET=xxx
-```
-
-> 📌 如果 `.env.example` 文件不存在（仓库中没提交模板），直接复制上面这一版即可。
-
----
-
-## 🚀 Quick Start
-
-> 前提：Installation → Option A 全部执行完毕（Postgres 容器 up + pnpm install + db:push + db:seed 全部通过）。
+> 前提：安装部署 → Option A 全部执行完毕（Postgres 容器 up + pnpm install + db:push + db:seed 全部通过）。
 
 ### 启动双端开发服务器
 
@@ -176,7 +168,33 @@ pnpm dev --filter mobile
 
 ---
 
-## 🏗️ Architecture Highlights（架构与核心工程实践）
+## 🔧 配置说明 (Configuration)
+
+`.env` 必填字段如下：
+
+```env
+# ========== Database ==========
+# 对齐 Option A 中 docker-compose.yml 的 Postgres 15 账号
+DATABASE_URL="postgresql://recipe_user:recipe_password@localhost:5432/recipe_planner_dev"
+
+# ========== NextAuth ==========
+# Web 端的绝对地址（开发默认 localhost:3000；生产改为你的域名）
+NEXTAUTH_URL="http://localhost:3000"
+# 生成密钥：openssl rand -hex 32
+NEXTAUTH_SECRET="your-nextauth-secret-key-64-char-hex"
+
+# ========== OAuth Providers（可选，至少留一个 Email 方式可用）==========
+# GITHUB_ID=xxx
+# GITHUB_SECRET=xxx
+# GOOGLE_ID=xxx
+# GOOGLE_SECRET=xxx
+```
+
+> 📌 如果 `.env.example` 文件不存在（仓库中没提交模板），直接复制上面这一版即可。
+
+---
+
+## 📐 架构设计 (Architecture)
 
 ### 1. Monorepo 拓扑依赖图
 
@@ -211,13 +229,12 @@ graph TD
 通过 `pnpm Workspaces` + `Turborepo 增量构建`，任意共享包变更只会影响依赖它的应用，未变的应用从 `node_modules/.cache/turbo` 秒级命中缓存，实现跨端一致的秒级增量编译体验。
 
 **核心源码入口**：
+
 - [turbo.json（构建任务流水线：build/lint/dev）](turbo.json)
 - [package.json（pnpm workspace 别名 + 根级脚本：`pnpm db:*`）](package.json)
 - [packages/prisma-db/（共享 Prisma Client 实例）](packages/prisma-db/)
 - [packages/validators/（跨端 Zod 校验）](packages/validators/)
 - [packages/ui/（共享 UI 组件库）](packages/ui/)
-
----
 
 ### 2. 膳食计划 + 智能购物清单聚合引擎
 
@@ -245,10 +262,9 @@ sequenceDiagram
 ```
 
 **核心源码入口**：
+
 - [prisma/schema.prisma（MealPlanItem ↔ RecipeIngredient ↔ Category 关联定义）](prisma/schema.prisma)
 - [packages/validators/（膳食计划提交 & 购物清单生成 Zod schemas）](packages/validators/)
-
----
 
 ### 3. 统一数据模型架构（ER Diagram）
 
@@ -257,13 +273,13 @@ erDiagram
     User ||--o{ Recipe : "author of"
     User ||--o{ Favorite : "favorited"
     User ||--o{ MealPlan : "created"
-       User ||--o{ ShoppingList : "owns"
-             RecentlyViewedRecipe : "viewed"
+    User ||--o{ ShoppingList : "owns"
+    User ||--o{ RecentlyViewedRecipe : "viewed"
 
     Recipe ||--o{ CategoryOnRecipe : "categorized"
-       Recipe ||--o{ TagOnRecipe : "tagged"
+    Recipe ||--o{ TagOnRecipe : "tagged"
     Recipe ||--o{ RecipeIngredient : "has"
-       Recipe ||--o{ MealPlanItem : "included in"
+    Recipe ||--o{ MealPlanItem : "included in"
 
     MealPlan ||--o{ MealPlanItem : "contains"
     ShoppingList ||--o{ ShoppingListItem : "contains"
@@ -276,11 +292,12 @@ erDiagram
 ```
 
 **核心源码入口**：
+
 - [prisma/schema.prisma（完整 PostgreSQL Schema 声明 + 索引优化注释）](prisma/schema.prisma)
 
 ---
 
-## 📂 项目结构
+## 📂 项目结构 (Project Structure)
 
 ```text
 recipe-planner-app/
@@ -309,7 +326,7 @@ recipe-planner-app/
 
 ---
 
-## 📊 Technology Stack Summary
+## 📊 技术栈 (Tech Stack)
 
 | 层级 | 选型 | 作用 |
 |:----|:----|:----|
@@ -326,7 +343,7 @@ recipe-planner-app/
 
 ---
 
-## 🤝 Contributing
+## 🤝 参与贡献 (Contributing)
 
 本项目已经有一份完整的贡献指南，建议所有第一次贡献的开发者先读 [CONTRIBUTING.md](CONTRIBUTING.md)，里面详细规定了：
 
@@ -342,9 +359,9 @@ recipe-planner-app/
 
 ---
 
-## 🔒 Security
+## 🔒 安全说明 (Security)
 
-- 生产部署建议：
+- **生产部署建议**：
   - `NEXTAUTH_URL` 必须写真实域名，绝不能写 localhost
   - `NEXTAUTH_SECRET` 必须用 `openssl rand -hex 32` 生成 64 字符随机串
   - PostgreSQL 对外只允许从应用服务器 IP 连接，不要 0.0.0.0
@@ -353,7 +370,7 @@ recipe-planner-app/
 
 ---
 
-## 📄 License
+## 📄 许可证 (License)
 
 本项目基于 **MIT License** 开源。
 
