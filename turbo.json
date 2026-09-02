@@ -5,11 +5,25 @@
     "build": {
       "dependsOn": ["^build"],
       "outputs": [".next/**", "!.next/cache/**"],
-      "passThroughEnv": ["NODE_ENV", "NEXT_PUBLIC_APP_URL", "SUPABASE_SUPABASE_NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SUPABASE_ANON_KEY"]
+      "passThroughEnv": [
+        "NODE_ENV",
+        "NEXT_PUBLIC_APP_URL",
+        "NEXT_PUBLIC_SUPABASE_URL",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "SUPABASE_SUPABASE_NEXT_PUBLIC_SUPABASE_URL",
+        "SUPABASE_SUPABASE_ANON_KEY"
+      ]
     },
     "lint": {
       "dependsOn": ["^build"],
-      "env": ["NODE_ENV", "NEXT_PUBLIC_APP_URL", "SUPABASE_SUPABASE_NEXT_PUBLIC_SUPABASE_URL", "SUPABASE_SUPABASE_ANON_KEY"]
+      "env": [
+        "NODE_ENV",
+        "NEXT_PUBLIC_APP_URL",
+        "NEXT_PUBLIC_SUPABASE_URL",
+        "NEXT_PUBLIC_SUPABASE_ANON_KEY",
+        "SUPABASE_SUPABASE_NEXT_PUBLIC_SUPABASE_URL",
+        "SUPABASE_SUPABASE_ANON_KEY"
+      ]
     },
     "dev": {
       "cache": false,
