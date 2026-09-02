@@ -30,7 +30,9 @@ jobs:
           cache: pnpm
 
       - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+        run: |
+          pnpm install --frozen-lockfile
+          pnpm --filter @repo/db exec prisma generate
 
       - name: Lint (Turbo)
         run: pnpm lint || echo "⚠️  lint warnings tolerated in CI"
