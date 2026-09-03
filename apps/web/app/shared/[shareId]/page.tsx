@@ -6,44 +6,44 @@ import { Avatar, AvatarFallback, AvatarImage } from "@repo/ui/avatar"
 import { Clock, ChefHat, Users, Star } from "lucide-react"
 import { createClient } from "@supabase/supabase-js"
 
-// 初始化Supabase客户端
-const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
+// 获取Supabase客户端（避免在构建时因缺少环境变量而直接崩溃）
+function getSupabaseClient() {
+  const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY;
 
-if (!supabaseUrl || !supabaseKey) {
-  // 对于客户端组件，可能需要不同的错误处理方式
-  // 例如，可以显示一个错误消息给用户，或者在构建时失败（如果可能）
-  console.error("Supabase URL or Anon Key is not defined for client. Check environment variables.");
-  // 可以在此处返回一个表示错误的组件或null
-  throw new Error("Supabase client configuration error."); 
-}
-
-// 创建Supabase客户端，添加重试和超时配置
-const supabase = createClient(supabaseUrl, supabaseKey, {
-  auth: {
-    persistSession: false,
-    autoRefreshToken: false,
-  },
-  global: {
-    // 减少超时时间，避免长时间等待
-    fetch: (url, options) => {
-      return fetch(url, {
-        ...options,
-        // 设置较短的超时时间
-        signal: AbortSignal.timeout(10000), // 10秒超时
-      })
-    },
-  },
-})
-
-async function getSharedRecipe(shareId: string) {
-  const { data, error } = await supabase.from("recipe_shares").select("*").eq("share_id", shareId).single()
-
-  if (error || !data) {
-    return null
+  if (!supabaseUrl || !supabaseKey) {
+    return null;
   }
 
-  return data
+  return createClient(supabaseUrl, supabaseKey, {
+    auth: {
+      persistSession: false,
+      autoRefreshToken: false,
+    },
+    global: {
+      fetch: (url, options) => {
+        return fetch(url, {
+          ...options,
+          signal: AbortSignal.timeout(10000),
+        });
+      },
+    },
+  });
+}
+
+async function getSharedRecipe(shareId: string) {
+  const supabase = getSupabaseClient();
+  if (!supabase) {
+    return null;
+  }
+
+  const { data, error } = await supabase.from("recipe_shares").select("*").eq("share_id", shareId).single();
+
+  if (error || !data) {
+    return null;
+  }
+
+  return data;
 }
 
 export default async function SharedRecipePage({ params }: { params: { shareId: string } }) {
