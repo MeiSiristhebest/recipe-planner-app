@@ -3,18 +3,16 @@ import { auth } from "@/lib/auth"
 import { v4 as uuidv4 } from "uuid"
 import { createClient } from "@supabase/supabase-js"
 
-// 初始化Supabase客户端
-const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
-const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+function getSupabase() {
+  const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL;
+  const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
 
-if (!supabaseUrl || !supabaseKey) {
-  // 在服务器端，可以抛出错误或记录日志
-  console.error("Supabase URL or Service Role Key is not defined in environment variables.");
-  // 根据您的错误处理策略，您可能希望在此处返回一个错误响应
-  // return NextResponse.json({ error: "Server configuration error" }, { status: 500 });
-  throw new Error("Supabase URL or Service Role Key is not defined.")
+  if (!supabaseUrl || !supabaseKey) {
+    console.error("Supabase URL or Service Role Key is not defined in environment variables.");
+    throw new Error("Supabase URL or Service Role Key is not defined.");
+  }
+  return createClient(supabaseUrl, supabaseKey);
 }
-const supabase = createClient(supabaseUrl, supabaseKey)
 
 export async function POST(request: Request) {
   try {
@@ -51,6 +49,7 @@ export async function POST(request: Request) {
     const buffer = Buffer.from(arrayBuffer)
 
     // 上传到Supabase Storage
+    const supabase = getSupabase()
     const { data, error } = await supabase.storage.from("recipe-images").upload(filePath, buffer, {
       contentType: file.type,
       upsert: false,
